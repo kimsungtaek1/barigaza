@@ -72,10 +72,21 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToWriteScreen,
-        child: Icon(Icons.add),
-        backgroundColor: Colors.brown[200],
+        backgroundColor: Color(0xFF2F6DF3),
+        icon: Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 18, // 아이콘 크기 증가
+        ),
+        label: Text(
+          '추가',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }

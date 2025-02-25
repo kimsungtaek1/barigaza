@@ -316,6 +316,22 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
             const SizedBox(width: 12),
           ],
         ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _showAddMeetingDialog,
+          backgroundColor: Color(0xFF2F6DF3),
+          icon: Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 18,
+          ),
+          label: Text(
+            '추가',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+        ),
         body: Column(
           children: [
             Container(
@@ -358,23 +374,6 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                         _setupMeetingsStream();
                       }
                     },
-                  ),
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: SizedBox(
-                      width: 100,
-                      height: 48,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () => _showAddMeetingDialog(),
-                        icon: const Icon(Icons.add),
-                        label: const Text('추가'),
-                      ),
-                    ),
                   ),
                 ],
               ),
