@@ -72,19 +72,25 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 배경색은 main.dart의 테마 색상과 동일하게 설정
-      backgroundColor: const Color(0xFF726C56),
+      backgroundColor: const Color(0xFF2F6DF3),
       body: Center(
         child: FadeTransition(
           opacity: _animation,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 스플래시 이미지 (assets 폴더에 splash.png 파일이 있어야 합니다)
               Image.asset(
                 'assets/images/splash.png',
-                width: 300,
-                height: 300,
+                width: 150,
+                height: 150,
+              ),
+              const Text(
+                '바리가자',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 20),
               // 로딩 인디케이터

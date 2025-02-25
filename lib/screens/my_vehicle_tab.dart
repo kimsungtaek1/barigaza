@@ -379,7 +379,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFFF5F3ED),
-                foregroundColor: Color(0xFF726C56),
+                foregroundColor: Color(0xFF2F6DF3),
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 minimumSize: Size(0, 0),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -390,7 +390,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                   Icon(
                     Icons.local_gas_station,
                     size: 18,
-                    color: Color(0xFF726C56),
+                    color: Color(0xFF2F6DF3),
                   ),
                   SizedBox(width: 4),
                   Text(
