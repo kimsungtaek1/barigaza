@@ -19,7 +19,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF8B8175),
+      backgroundColor: const Color(0xFF2F6DF3),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

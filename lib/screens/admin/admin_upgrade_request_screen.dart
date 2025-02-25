@@ -46,7 +46,7 @@ class _AdminUpgradeRequestScreenState extends State<AdminUpgradeRequestScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('관리자 등급 신청'),
-        backgroundColor: const Color(0xFF8B8175),
+        backgroundColor: const Color(0xFF2F6DF3),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

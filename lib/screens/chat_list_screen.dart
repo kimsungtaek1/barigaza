@@ -60,7 +60,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B785D),
+                    backgroundColor: const Color(0xFF2F6DF3),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

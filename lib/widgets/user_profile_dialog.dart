@@ -115,7 +115,7 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleAddFriend,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B785D),
+                  backgroundColor: const Color(0xFF2F6DF3),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

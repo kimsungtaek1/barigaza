@@ -213,7 +213,7 @@ class _AdminAccountTabState extends State<AdminAccountTab> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B8175),
+                          backgroundColor: const Color(0xFF2F6DF3),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () => _handleSave(field),

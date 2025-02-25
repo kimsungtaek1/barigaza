@@ -341,7 +341,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _saveFuelRecord,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF8B785D),
+                          backgroundColor: Color(0xFF2F6DF3),
                           padding: EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
