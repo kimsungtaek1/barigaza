@@ -1,0 +1,126 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+    id 'com.google.firebase.crashlytics'
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+// 서명 정보를 담은 key.properties 파일을 읽어오기
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('app/key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+} else {
+    println "key.properties file no exists"
+}
+
+android {
+    namespace "com.barigaza.barigaza"
+    compileSdkVersion 34
+    ndkVersion flutter.ndkVersion
+
+    // 릴리즈 서명 정보 추가
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        applicationId "com.barigaza.barigaza"
+        minSdkVersion 23
+        targetSdkVersion 34
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            // 릴리즈 빌드 시 서명 구성에 방금 추가한 release 서명 정보를 사용합니다.
+            signingConfig signingConfigs.release
+            // 릴리즈 빌드 최적화 관련 옵션 (원하는 경우 설정)
+            minifyEnabled true
+            shrinkResources true
+        }
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.appcompat:appcompat:1.6.1'
+            force 'androidx.appcompat:appcompat-resources:1.6.1'
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/*.kotlin_module'
+    }
+
+    lintOptions {
+        disable 'InvalidPackage'
+        checkReleaseBuilds false
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation 'com.google.android.gms:play-services-ads:23.0.0'
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation "com.google.firebase:firebase-analytics"
+    implementation "androidx.multidex:multidex:2.0.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.naver.maps:map-sdk:3.17.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+    implementation 'com.google.android.gms:play-services-safetynet:18.0.1'
+    implementation 'com.google.firebase:firebase-appcheck'
+    implementation 'com.google.firebase:firebase-appcheck-debug'
+    implementation 'com.google.firebase:firebase-appcheck-playintegrity'
+    implementation 'com.google.android.play:integrity:1.1.0'
+}

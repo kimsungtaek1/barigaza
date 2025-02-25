@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "334968888840",
+    "project_id": "barigaza-796a1",
+    "storage_bucket": "barigaza-796a1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:334968888840:android:9ea29bcde23448040c3bbd",
+        "android_client_info": {
+          "package_name": "com.barigaza.barigaza"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHoilz_NxTcOu8ZoTe5V8SNOMCdaoE71Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,206 @@
+{
+  "서울특별시": {
+    "coordinates": { "lat": 37.5665, "lng": 126.9780 },
+    "districts": [
+      { "name": "강남구", "coordinates": { "lat": 37.5172, "lng": 127.0473 } },
+      { "name": "강동구", "coordinates": { "lat": 37.5301, "lng": 127.1237 } },
+      { "name": "강북구", "coordinates": { "lat": 37.6396, "lng": 127.0257 } },
+      { "name": "강서구", "coordinates": { "lat": 37.5509, "lng": 126.8497 } },
+      { "name": "관악구", "coordinates": { "lat": 37.4784, "lng": 126.9516 } },
+      { "name": "광진구", "coordinates": { "lat": 37.5385, "lng": 127.0823 } },
+      { "name": "구로구", "coordinates": { "lat": 37.4952, "lng": 126.8876 } },
+      { "name": "금천구", "coordinates": { "lat": 37.4568, "lng": 126.8954 } },
+      { "name": "노원구", "coordinates": { "lat": 37.6542, "lng": 127.0568 } },
+      { "name": "도봉구", "coordinates": { "lat": 37.6688, "lng": 127.0471 } },
+      { "name": "동대문구", "coordinates": { "lat": 37.5744, "lng": 127.0399 } },
+      { "name": "동작구", "coordinates": { "lat": 37.5124, "lng": 126.9395 } },
+      { "name": "마포구", "coordinates": { "lat": 37.5665, "lng": 126.9018 } },
+      { "name": "서대문구", "coordinates": { "lat": 37.5791, "lng": 126.9368 } },
+      { "name": "서초구", "coordinates": { "lat": 37.4837, "lng": 127.0324 } },
+      { "name": "성동구", "coordinates": { "lat": 37.5635, "lng": 127.0365 } },
+      { "name": "성북구", "coordinates": { "lat": 37.6067, "lng": 127.0093 } },
+      { "name": "송파구", "coordinates": { "lat": 37.5145, "lng": 127.1060 } },
+      { "name": "양천구", "coordinates": { "lat": 37.5169, "lng": 126.8687 } },
+      { "name": "영등포구", "coordinates": { "lat": 37.5264, "lng": 126.8969 } },
+      { "name": "용산구", "coordinates": { "lat": 37.5320, "lng": 126.9900 } },
+      { "name": "은평구", "coordinates": { "lat": 37.6176, "lng": 126.9227 } },
+      { "name": "종로구", "coordinates": { "lat": 37.5735, "lng": 126.9789 } },
+      { "name": "중구", "coordinates": { "lat": 37.5641, "lng": 126.9979 } },
+      { "name": "중랑구", "coordinates": { "lat": 37.6066, "lng": 127.0927 } }
+    ]
+  },
+  "부산광역시": {
+    "coordinates": { "lat": 35.1796, "lng": 129.0756 },
+    "districts": [
+      { "name": "강서구", "coordinates": { "lat": 35.2121, "lng": 128.9805 } },
+      { "name": "금정구", "coordinates": { "lat": 35.2425, "lng": 129.0925 } },
+      { "name": "기장군", "coordinates": { "lat": 35.2446, "lng": 129.2228 } },
+      { "name": "남구", "coordinates": { "lat": 35.1366, "lng": 129.0843 } },
+      { "name": "동구", "coordinates": { "lat": 35.1292, "lng": 129.0453 } },
+      { "name": "동래구", "coordinates": { "lat": 35.2019, "lng": 129.0842 } },
+      { "name": "부산진구", "coordinates": { "lat": 35.1628, "lng": 129.0533 } },
+      { "name": "북구", "coordinates": { "lat": 35.1971, "lng": 128.9918 } },
+      { "name": "사상구", "coordinates": { "lat": 35.1526, "lng": 128.9907 } },
+      { "name": "사하구", "coordinates": { "lat": 35.1047, "lng": 128.9769 } },
+      { "name": "서구", "coordinates": { "lat": 35.0979, "lng": 129.0245 } },
+      { "name": "수영구", "coordinates": { "lat": 35.1453, "lng": 129.1139 } },
+      { "name": "연제구", "coordinates": { "lat": 35.1766, "lng": 129.0821 } },
+      { "name": "영도구", "coordinates": { "lat": 35.0917, "lng": 129.0674 } },
+      { "name": "중구", "coordinates": { "lat": 35.1064, "lng": 129.0323 } },
+      { "name": "해운대구", "coordinates": { "lat": 35.1631, "lng": 129.1635 } }
+    ]
+  },
+  "대구광역시": {
+    "coordinates": { "lat": 35.8722, "lng": 128.6025 },
+    "districts": [
+      { "name": "중구", "coordinates": { "lat": 35.8691, "lng": 128.5913 } },
+      { "name": "동구", "coordinates": { "lat": 35.8700, "lng": 128.6294 } },
+      { "name": "서구", "coordinates": { "lat": 35.8750, "lng": 128.5660 } },
+      { "name": "남구", "coordinates": { "lat": 35.8547, "lng": 128.5830 } },
+      { "name": "북구", "coordinates": { "lat": 35.9000, "lng": 128.6100 } },
+      { "name": "수성구", "coordinates": { "lat": 35.8467, "lng": 128.6280 } },
+      { "name": "달서구", "coordinates": { "lat": 35.8550, "lng": 128.5400 } },
+      { "name": "달성군", "coordinates": { "lat": 35.8000, "lng": 128.6500 } }
+    ]
+  },
+  "인천광역시": {
+    "coordinates": { "lat": 37.4563, "lng": 126.7052 },
+    "districts": [
+      { "name": "중구", "coordinates": { "lat": 37.4563, "lng": 126.7052 } },
+      { "name": "동구", "coordinates": { "lat": 37.4690, "lng": 126.7270 } },
+      { "name": "남구", "coordinates": { "lat": 37.4575, "lng": 126.6735 } },
+      { "name": "연수구", "coordinates": { "lat": 37.4060, "lng": 126.7080 } },
+      { "name": "남동구", "coordinates": { "lat": 37.4300, "lng": 126.7450 } },
+      { "name": "부평구", "coordinates": { "lat": 37.4940, "lng": 126.7100 } },
+      { "name": "계양구", "coordinates": { "lat": 37.5390, "lng": 126.7330 } },
+      { "name": "서구", "coordinates": { "lat": 37.5040, "lng": 126.7500 } },
+      { "name": "강화군", "coordinates": { "lat": 37.7450, "lng": 126.4900 } },
+      { "name": "옹진군", "coordinates": { "lat": 37.9300, "lng": 126.5900 } }
+    ]
+  },
+  "광주광역시": {
+    "coordinates": { "lat": 35.1595, "lng": 126.8526 },
+    "districts": [
+      { "name": "동구", "coordinates": { "lat": 35.1550, "lng": 126.9200 } },
+      { "name": "서구", "coordinates": { "lat": 35.1680, "lng": 126.8400 } },
+      { "name": "남구", "coordinates": { "lat": 35.1300, "lng": 126.8600 } },
+      { "name": "북구", "coordinates": { "lat": 35.1900, "lng": 126.8700 } },
+      { "name": "광산구", "coordinates": { "lat": 35.1500, "lng": 126.8000 } }
+    ]
+  },
+  "대전광역시": {
+    "coordinates": { "lat": 36.3504, "lng": 127.3845 },
+    "districts": [
+      { "name": "동구", "coordinates": { "lat": 36.3500, "lng": 127.3900 } },
+      { "name": "중구", "coordinates": { "lat": 36.3500, "lng": 127.3800 } },
+      { "name": "서구", "coordinates": { "lat": 36.3500, "lng": 127.3700 } },
+      { "name": "유성구", "coordinates": { "lat": 36.3600, "lng": 127.4000 } },
+      { "name": "대덕구", "coordinates": { "lat": 36.3550, "lng": 127.3600 } }
+    ]
+  },
+  "울산광역시": {
+    "coordinates": { "lat": 35.5384, "lng": 129.3114 },
+    "districts": [
+      { "name": "중구", "coordinates": { "lat": 35.5380, "lng": 129.3150 } },
+      { "name": "남구", "coordinates": { "lat": 35.5350, "lng": 129.3000 } },
+      { "name": "동구", "coordinates": { "lat": 35.5500, "lng": 129.3200 } },
+      { "name": "북구", "coordinates": { "lat": 35.5450, "lng": 129.3300 } },
+      { "name": "울주군", "coordinates": { "lat": 35.5400, "lng": 129.2500 } }
+    ]
+  },
+  "경기도": {
+    "coordinates": { "lat": 37.4138, "lng": 127.5183 },
+    "districts": [
+      { "name": "수원시", "coordinates": { "lat": 37.2636, "lng": 127.0286 } },
+      { "name": "성남시", "coordinates": { "lat": 37.4200, "lng": 127.1268 } },
+      { "name": "고양시", "coordinates": { "lat": 37.6584, "lng": 126.8357 } },
+      { "name": "용인시", "coordinates": { "lat": 37.2410, "lng": 127.1778 } },
+      { "name": "부천시", "coordinates": { "lat": 37.5030, "lng": 126.7665 } },
+      { "name": "안산시", "coordinates": { "lat": 37.3219, "lng": 126.8303 } },
+      { "name": "평택시", "coordinates": { "lat": 36.9925, "lng": 127.1126 } },
+      { "name": "과천시", "coordinates": { "lat": 37.4292, "lng": 126.9843 } },
+      { "name": "남양주시", "coordinates": { "lat": 37.6563, "lng": 127.2160 } }
+    ]
+  },
+  "강원도": {
+    "coordinates": { "lat": 37.7519, "lng": 128.8963 },
+    "districts": [
+      { "name": "춘천시", "coordinates": { "lat": 37.8813, "lng": 127.7293 } },
+      { "name": "원주시", "coordinates": { "lat": 37.3414, "lng": 127.9198 } },
+      { "name": "강릉시", "coordinates": { "lat": 37.7524, "lng": 128.8968 } },
+      { "name": "동해시", "coordinates": { "lat": 37.5200, "lng": 129.1140 } },
+      { "name": "속초시", "coordinates": { "lat": 38.2070, "lng": 128.5910 } },
+      { "name": "태백시", "coordinates": { "lat": 37.1674, "lng": 128.9862 } }
+    ]
+  },
+  "충청북도": {
+    "coordinates": { "lat": 36.6357, "lng": 127.4914 },
+    "districts": [
+      { "name": "청주시", "coordinates": { "lat": 36.6424, "lng": 127.4890 } },
+      { "name": "충주시", "coordinates": { "lat": 36.9737, "lng": 127.9333 } },
+      { "name": "제천시", "coordinates": { "lat": 37.1374, "lng": 128.1926 } }
+    ]
+  },
+  "충청남도": {
+    "coordinates": { "lat": 36.5184, "lng": 126.8000 },
+    "districts": [
+      { "name": "천안시", "coordinates": { "lat": 36.8150, "lng": 127.1133 } },
+      { "name": "공주시", "coordinates": { "lat": 36.4468, "lng": 127.1117 } },
+      { "name": "보령시", "coordinates": { "lat": 36.3347, "lng": 126.6318 } },
+      { "name": "아산시", "coordinates": { "lat": 36.7830, "lng": 126.9890 } },
+      { "name": "서산시", "coordinates": { "lat": 36.7850, "lng": 126.4500 } },
+      { "name": "금산군", "coordinates": { "lat": 36.1467, "lng": 127.3828 } },
+      { "name": "당진시", "coordinates": { "lat": 36.9000, "lng": 126.6374 } }
+    ]
+  },
+  "전라북도": {
+    "coordinates": { "lat": 35.7174, "lng": 127.1440 },
+    "districts": [
+      { "name": "전주시", "coordinates": { "lat": 35.8200, "lng": 127.1088 } },
+      { "name": "군산시", "coordinates": { "lat": 35.9678, "lng": 126.7361 } },
+      { "name": "익산시", "coordinates": { "lat": 35.9500, "lng": 126.9574 } },
+      { "name": "정읍시", "coordinates": { "lat": 35.5667, "lng": 126.8500 } },
+      { "name": "남원시", "coordinates": { "lat": 35.4167, "lng": 127.3840 } },
+      { "name": "김제시", "coordinates": { "lat": 35.8161, "lng": 126.8718 } }
+    ]
+  },
+  "전라남도": {
+    "coordinates": { "lat": 34.8164, "lng": 126.4623 },
+    "districts": [
+      { "name": "목포시", "coordinates": { "lat": 34.8111, "lng": 126.3922 } },
+      { "name": "여수시", "coordinates": { "lat": 34.7600, "lng": 127.6620 } },
+      { "name": "순천시", "coordinates": { "lat": 34.9500, "lng": 127.4880 } },
+      { "name": "나주시", "coordinates": { "lat": 35.0167, "lng": 126.7167 } },
+      { "name": "광양시", "coordinates": { "lat": 34.9533, "lng": 127.6950 } },
+      { "name": "무안군", "coordinates": { "lat": 34.9850, "lng": 126.7333 } }
+    ]
+  },
+  "경상북도": {
+    "coordinates": { "lat": 36.0000, "lng": 128.0000 },
+    "districts": [
+      { "name": "포항시", "coordinates": { "lat": 36.0190, "lng": 129.3430 } },
+      { "name": "구미시", "coordinates": { "lat": 36.1190, "lng": 128.3440 } },
+      { "name": "경산시", "coordinates": { "lat": 35.8250, "lng": 128.7520 } },
+      { "name": "안동시", "coordinates": { "lat": 36.5683, "lng": 128.7290 } },
+      { "name": "영주시", "coordinates": { "lat": 36.8137, "lng": 128.6300 } },
+      { "name": "청송군", "coordinates": { "lat": 36.3790, "lng": 129.1600 } }
+    ]
+  },
+  "경상남도": {
+    "coordinates": { "lat": 35.2437, "lng": 128.6919 },
+    "districts": [
+      { "name": "창원시", "coordinates": { "lat": 35.2280, "lng": 128.6811 } },
+      { "name": "김해시", "coordinates": { "lat": 35.2280, "lng": 128.8894 } },
+      { "name": "진주시", "coordinates": { "lat": 35.1796, "lng": 128.0997 } },
+      { "name": "거제시", "coordinates": { "lat": 34.8800, "lng": 128.6210 } },
+      { "name": "양산시", "coordinates": { "lat": 35.3288, "lng": 129.0381 } }
+    ]
+  },
+  "제주특별자치도": {
+    "coordinates": { "lat": 33.4996, "lng": 126.5312 },
+    "districts": [
+      { "name": "제주시", "coordinates": { "lat": 33.5000, "lng": 126.5333 } },
+      { "name": "서귀포시", "coordinates": { "lat": 33.2500, "lng": 126.5667 } }
+    ]
+  }
+}
