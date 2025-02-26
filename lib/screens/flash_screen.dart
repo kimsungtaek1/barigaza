@@ -317,6 +317,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'flash_add_button',
           onPressed: _showAddMeetingDialog,
           backgroundColor: Color(0xFF2F6DF3),
           icon: Icon(

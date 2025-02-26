@@ -73,6 +73,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'community_add_button',
         onPressed: _navigateToWriteScreen,
         backgroundColor: Color(0xFF2F6DF3),
         icon: Icon(

@@ -1,20 +1,17 @@
-import 'package:barigaza/screens/admin/admin_banner_modify.dart';
-import 'package:barigaza/screens/fuel_record_screen.dart';
-import 'package:barigaza/widgets/customColor.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
 // 스크린 import
-import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/home_screen.dart';
@@ -24,31 +21,25 @@ import 'screens/find_password_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/admin_upgrade_request_screen.dart';
 import 'screens/admin/admin_main_screen.dart';
+import 'screens/admin/admin_banner_modify.dart';
+import 'screens/fuel_record_screen.dart';
 
 // 서비스 import
 import 'services/auth_service.dart';
 import 'services/event_service.dart';
+import 'widgets/customColor.dart';
 
 // 상수 정의
-const String APP_NAME = 'BRG';
 const String NAVER_CLIENT_ID = '5k1r2vy3lz';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 기본 Firebase 초기화만 여기서 수행
   try {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    // Firebase 캐시 강제 삭제
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await FirebaseFirestore.instance.clearPersistence();
-
-    // 이벤트 체크 실행
-    await EventService().checkExpiredEvents();
-
   } catch (e) {
     if (e.toString().contains('duplicate-app')) {
       debugPrint('Firebase already initialized');
@@ -57,54 +48,78 @@ void main() async {
     }
   }
 
-  // Firebase AppCheck 초기화
-  if (kDebugMode) {
+  // 필요한 초기화를 여기서 수행
+  await initializeApp();
+
+  runApp(const MyApp());
+}
+
+// 앱 초기화 함수 - 스플래시 화면 없이 초기화 작업 수행
+Future<void> initializeApp() async {
+  try {
+    // SharedPreferences 초기화 및 클리어
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    // Firebase 캐시 강제 삭제
     try {
+      await FirebaseFirestore.instance.clearPersistence();
+    } catch (e) {
+      debugPrint('Firestore persistence clear error: $e');
+    }
+
+    // 이벤트 체크 실행
+    await EventService().checkExpiredEvents();
+
+    // Firebase AppCheck 초기화
+    await initializeAppCheck();
+
+    // 네이버 지도 SDK 초기화
+    await NaverMapSdk.instance.initialize(
+      clientId: NAVER_CLIENT_ID,
+      onAuthFailed: (error) => debugPrint('네이버 지도 초기화 실패: $error'),
+    );
+
+    // AdMob 초기화
+    await MobileAds.instance.initialize();
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+          testDeviceIds: ['57195416F96C769F4DC8787DA0B95470']
+      ),
+    );
+  } catch (e) {
+    debugPrint('초기화 오류: $e');
+  }
+}
+
+Future<void> initializeAppCheck() async {
+  try {
+    if (kDebugMode) {
       await FirebaseAppCheck.instance.activate(
         androidProvider: AndroidProvider.debug,
         appleProvider: AppleProvider.debug,
       );
 
-      // 잠시 대기
-      await Future.delayed(const Duration(seconds: 2));
-
       // Debug token 출력 시도
       try {
         final token = await FirebaseAppCheck.instance.getToken();
-        print('Firebase App Check Debug Token: $token');
+        debugPrint('Firebase App Check Debug Token: $token');
       } catch (e) {
         if (e.toString().contains('Too many attempts')) {
-          print('토큰 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
-          // 앱을 다시 시작하거나 몇 분 정도 기다린 후 다시 시도
+          debugPrint('토큰 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
         } else {
-          print('Token 얻기 실패: $e');
+          debugPrint('Token 얻기 실패: $e');
         }
       }
-    } catch (e) {
-      print('App Check 활성화 실패: $e');
+    } else {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.playIntegrity,
+        appleProvider: AppleProvider.deviceCheck,
+      );
     }
-  } else {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      appleProvider: AppleProvider.deviceCheck,
-    );
+  } catch (e) {
+    debugPrint('App Check 활성화 실패: $e');
   }
-
-  // 네이버 지도 SDK 초기화
-  await NaverMapSdk.instance.initialize(
-    clientId: NAVER_CLIENT_ID,
-    onAuthFailed: (error) => debugPrint('네이버 지도 초기화 실패: $error'),
-  );
-
-  // AdMob 초기화
-  await MobileAds.instance.initialize();
-  await MobileAds.instance.updateRequestConfiguration(
-    RequestConfiguration(
-        testDeviceIds: ['57195416F96C769F4DC8787DA0B95470']
-    ),
-  );
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -118,9 +133,9 @@ class MyApp extends StatelessWidget {
         Provider<EventService>(create: (_) => EventService()),
       ],
       child: MaterialApp(
-        title: APP_NAME,
         theme: _buildAppTheme(),
-        home: const SplashScreen(),
+        // 스플래시 화면 대신 로그인 상태에 따라 직접 홈 또는 로그인 화면으로 이동
+        home: _getInitialScreen(),
         routes: _buildAppRoutes(),
         debugShowCheckedModeBanner: false,
         localizationsDelegates: const [
@@ -135,6 +150,20 @@ class MyApp extends StatelessWidget {
         locale: const Locale('ko', 'KR'),
       ),
     );
+  }
+
+  // 로그인 상태에 따라 시작 화면 결정
+  Widget _getInitialScreen() {
+    // Firebase의 현재 로그인 상태 확인
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // 사용자가 로그인 상태이면 홈 화면으로 이동
+      return const HomeScreen();
+    } else {
+      // 로그인 되어 있지 않으면 로그인 화면으로 이동
+      return LoginScreen();
+    }
   }
 
   ThemeData _buildAppTheme() {
