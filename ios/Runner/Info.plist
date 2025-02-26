@@ -238,5 +238,7 @@
 	<true/>
 	<key>com.apple.developer.web-browser-engine.webcontent</key>
 	<true/>
+    <key>UIRequiresFullScreen</key>
+    <true/>
 </dict>
 </plist>
