@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../services/notification_service.dart';
+import '../services/post_service.dart';
 import 'community_edit_screen.dart'; // 편집 화면 임포트
 
 class CommunityContentScreen extends StatefulWidget {
@@ -26,6 +27,8 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
   bool _isLiked = false;
   int _likeCount = 0;
   final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final PostService _postService = PostService();
+  List<String> _blockedUsers = [];
 
   /// 댓글 편집 시 해당 댓글의 ID (null이면 새 댓글)
   String? editingCommentId;
@@ -34,6 +37,16 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
   void initState() {
     super.initState();
     _checkIfLiked();
+    _loadBlockedUsers();
+  }
+  
+  Future<void> _loadBlockedUsers() async {
+    if (currentUserId.isNotEmpty) {
+      final blockedUsers = await _postService.getBlockedUsers();
+      setState(() {
+        _blockedUsers = blockedUsers;
+      });
+    }
   }
 
   @override
@@ -244,6 +257,250 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
     final shareText = '$title\n\n$content';
     Share.share(shareText);
   }
+  
+  // 게시글 신고 메서드
+  Future<void> _reportPost() async {
+    final reportReasons = [
+      '불쾌감을 주는 콘텐츠',
+      '스팸 또는 홍보성 콘텐츠',
+      '부적절한 콘텐츠',
+      '혐오/차별 발언',
+      '불법적인 내용',
+      '기타'
+    ];
+    
+    String selectedReason = reportReasons[0];
+    final TextEditingController detailController = TextEditingController();
+    
+    final bool? result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('게시글 신고'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('신고 사유를 선택해주세요:'),
+                const SizedBox(height: 8),
+                // 신고 사유 드롭다운
+                DropdownButton<String>(
+                  isExpanded: true,
+                  value: selectedReason,
+                  items: reportReasons.map((reason) {
+                    return DropdownMenuItem<String>(
+                      value: reason,
+                      child: Text(reason),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        selectedReason = value;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Text('상세 내용 (선택사항):'),
+                TextField(
+                  controller: detailController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: '추가적인 신고 내용을 입력해주세요',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(foregroundColor: Colors.black),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('신고하기'),
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      final reason = selectedReason + (detailController.text.isNotEmpty 
+          ? ' - ${detailController.text}' 
+          : '');
+      
+      final success = await _postService.reportPost(widget.postId, reason);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success 
+              ? '신고가 접수되었습니다. 검토 후 조치하겠습니다.' 
+              : '신고 접수에 실패했습니다. 이미 신고한 게시글일 수 있습니다.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+  
+  // 댓글 신고 메서드
+  Future<void> _reportComment(String commentId) async {
+    final reportReasons = [
+      '불쾌감을 주는 콘텐츠',
+      '스팸 또는 홍보성 콘텐츠',
+      '부적절한 콘텐츠',
+      '혐오/차별 발언',
+      '불법적인 내용',
+      '기타'
+    ];
+    
+    String selectedReason = reportReasons[0];
+    final TextEditingController detailController = TextEditingController();
+    
+    final bool? result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('댓글 신고'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('신고 사유를 선택해주세요:'),
+                const SizedBox(height: 8),
+                // 신고 사유 드롭다운
+                DropdownButton<String>(
+                  isExpanded: true,
+                  value: selectedReason,
+                  items: reportReasons.map((reason) {
+                    return DropdownMenuItem<String>(
+                      value: reason,
+                      child: Text(reason),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        selectedReason = value;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Text('상세 내용 (선택사항):'),
+                TextField(
+                  controller: detailController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: '추가적인 신고 내용을 입력해주세요',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(foregroundColor: Colors.black),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('신고하기'),
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      final reason = selectedReason + (detailController.text.isNotEmpty 
+          ? ' - ${detailController.text}' 
+          : '');
+      
+      final success = await _postService.reportComment(widget.postId, commentId, reason);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success 
+              ? '신고가 접수되었습니다. 검토 후 조치하겠습니다.' 
+              : '신고 접수에 실패했습니다. 이미 신고한 댓글일 수 있습니다.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+  
+  // 사용자 차단 메서드
+  Future<void> _blockUser(String userId, String nickname) async {
+    // 확인 다이얼로그 표시
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('사용자 차단'),
+        content: Text('$nickname 님을 차단하시겠습니까?\n\n차단하면 해당 사용자의 게시글과 댓글이 보이지 않습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('차단하기'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      final success = await _postService.blockUser(userId);
+      
+      if (success) {
+        // 차단 목록 갱신
+        await _loadBlockedUsers();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$nickname 님을 차단했습니다.'),
+            duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: '실행취소',
+              onPressed: () async {
+                final undoSuccess = await _postService.unblockUser(userId);
+                if (undoSuccess) {
+                  await _loadBlockedUsers();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$nickname 님 차단을 해제했습니다.'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('사용자 차단에 실패했습니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
 
   String _getTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
@@ -418,11 +675,20 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
             backgroundColor: Colors.white,
             elevation: 0,
             actions: [
-              // 게시글 작성자만 ... 버튼 표시
-              if (data['userId'] == currentUserId)
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_horiz, color: Colors.black87),
-                  onSelected: (value) async {
+              // 신고 버튼 (작성자 자신은 제외)
+              if (data['userId'] != currentUserId && currentUserId.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.flag_outlined, color: Colors.red),
+                  onPressed: _reportPost,
+                  tooltip: '게시글 신고',
+                ),
+              
+              // 메뉴 버튼 (더 많은 옵션)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz, color: Colors.black87),
+                onSelected: (value) async {
+                  // 게시글 작성자인 경우의 메뉴 처리
+                  if (data['userId'] == currentUserId) {
                     if (value == 'edit') {
                       Navigator.push(
                         context,
@@ -464,18 +730,59 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
                         await _deletePost();
                       }
                     }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Text('수정'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text('삭제'),
-                    ),
-                  ],
-                ),
+                  } 
+                  // 다른 사용자의 게시글에 대한 작업
+                  else if (currentUserId.isNotEmpty) {
+                    if (value == 'report') {
+                      await _reportPost();
+                    } else if (value == 'block') {
+                      await _blockUser(
+                        data['userId'], 
+                        data['nickname'] ?? '알 수 없음',
+                      );
+                    }
+                  }
+                },
+                itemBuilder: (context) {
+                  if (data['userId'] == currentUserId) {
+                    // 작성자 자신인 경우
+                    return [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Text('수정'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('삭제'),
+                      ),
+                    ];
+                  } else if (currentUserId.isNotEmpty) {
+                    // 다른 사용자의 게시물인 경우
+                    return [
+                      const PopupMenuItem(
+                        value: 'report',
+                        child: Text('게시글 신고', style: TextStyle(color: Colors.red)),
+                      ),
+                      PopupMenuItem(
+                        value: 'block',
+                        child: Text(
+                          '${data['nickname'] ?? '사용자'} 차단하기',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ];
+                  } else {
+                    // 로그인하지 않은 경우
+                    return [
+                      const PopupMenuItem(
+                        value: 'login_required',
+                        enabled: false,
+                        child: Text('로그인이 필요합니다'),
+                      ),
+                    ];
+                  }
+                },
+              ),
             ],
           ),
           body: Column(
@@ -566,9 +873,38 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final comments = snapshot.data?.docs ?? [];
+        final allComments = snapshot.data?.docs ?? [];
+        
+        // 차단된 사용자의 댓글 필터링
+        final filteredComments = allComments.where((doc) {
+          final commentData = doc.data() as Map<String, dynamic>;
+          final commentUserId = commentData['userId'] as String?;
+          
+          // 차단된 사용자의 댓글은 표시하지 않음
+          if (commentUserId != null && _blockedUsers.contains(commentUserId)) {
+            return false;
+          }
+          
+          // 신고 처리된 댓글은 표시하지 않음 (일반 사용자에게는 숨김)
+          final reportStatus = commentData['reportStatus'] as String?;
+          if (reportStatus == 'blocked') {
+            return false;
+          }
+          
+          return true;
+        }).toList();
 
-        if (comments.isEmpty) {
+        if (filteredComments.isEmpty) {
+          if (allComments.isNotEmpty && filteredComments.isEmpty) {
+            // 모든 댓글이 필터링된 경우
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('표시할 수 있는 댓글이 없습니다.'),
+              ),
+            );
+          }
+          
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
@@ -580,9 +916,9 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: comments.length,
+          itemCount: filteredComments.length,
           itemBuilder: (context, index) {
-            return _buildCommentItem(comments[index]);
+            return _buildCommentItem(filteredComments[index]);
           },
         );
       },
@@ -672,57 +1008,91 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
                         ],
                       ),
                     ),
-                    if (comment['userId'] == currentUserId)
-                      PopupMenuButton<String>(
+                    PopupMenuButton<String>(
                         icon: const Icon(Icons.more_horiz, size: 16),
                         onSelected: (value) async {
-                          if (value == 'edit') {
-                            // 수정 모드 전환 시 텍스트만 업데이트합니다.
-                            setState(() {
-                              editingCommentId = commentId;
-                              _commentController.text =
-                                  comment['content'] ?? '';
-                            });
-                          } else if (value == 'delete') {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('댓글 삭제'),
-                                content:
-                                const Text('정말 이 댓글을 삭제하시겠습니까?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    style: TextButton.styleFrom(
-                                        foregroundColor: Colors.black),
-                                    child: const Text('취소'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    style: TextButton.styleFrom(
-                                        foregroundColor: Colors.black),
-                                    child: const Text('삭제'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirm == true) {
-                              await _deleteComment(commentId);
+                          if (comment['userId'] == currentUserId) {
+                            // 내 댓글일 경우 수정/삭제 기능
+                            if (value == 'edit') {
+                              setState(() {
+                                editingCommentId = commentId;
+                                _commentController.text = comment['content'] ?? '';
+                              });
+                            } else if (value == 'delete') {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('댓글 삭제'),
+                                  content: const Text('정말 이 댓글을 삭제하시겠습니까?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      style: TextButton.styleFrom(foregroundColor: Colors.black),
+                                      child: const Text('취소'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      style: TextButton.styleFrom(foregroundColor: Colors.black),
+                                      child: const Text('삭제'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await _deleteComment(commentId);
+                              }
+                            }
+                          } else if (currentUserId.isNotEmpty) {
+                            // 다른 사용자의 댓글일 경우 신고/차단 기능
+                            if (value == 'report') {
+                              await _reportComment(commentId);
+                            } else if (value == 'block') {
+                              await _blockUser(
+                                comment['userId'],
+                                comment['nickname'] ?? '알 수 없음',
+                              );
                             }
                           }
                         },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Text('수정'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Text('삭제'),
-                          ),
-                        ],
+                        itemBuilder: (context) {
+                          if (comment['userId'] == currentUserId) {
+                            // 내 댓글인 경우
+                            return [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Text('수정'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text('삭제'),
+                              ),
+                            ];
+                          } else if (currentUserId.isNotEmpty) {
+                            // 다른 사용자의 댓글인 경우
+                            return [
+                              const PopupMenuItem(
+                                value: 'report',
+                                child: Text('댓글 신고', style: TextStyle(color: Colors.red)),
+                              ),
+                              PopupMenuItem(
+                                value: 'block',
+                                child: Text(
+                                  '${comment['nickname'] ?? '사용자'} 차단하기',
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ];
+                          } else {
+                            // 로그인하지 않은 경우
+                            return [
+                              const PopupMenuItem(
+                                value: 'login_required',
+                                enabled: false,
+                                child: Text('로그인이 필요합니다'),
+                              ),
+                            ];
+                          }
+                        },
                       ),
                   ],
                 ),

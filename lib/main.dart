@@ -27,6 +27,7 @@ import 'screens/fuel_record_screen.dart';
 // 서비스 import
 import 'services/auth_service.dart';
 import 'services/event_service.dart';
+import 'services/content_filter_service.dart';
 import 'widgets/customColor.dart';
 
 // 상수 정의
@@ -73,6 +74,9 @@ Future<void> initializeApp() async {
 
     // Firebase AppCheck 초기화
     await initializeAppCheck();
+    
+    // 콘텐츠 필터 서비스 초기화
+    await ContentFilterService().initialize();
 
     // 네이버 지도 SDK 초기화
     await NaverMapSdk.instance.initialize(

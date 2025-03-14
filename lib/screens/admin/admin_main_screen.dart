@@ -5,6 +5,8 @@ import 'admin_event_tab.dart';
 import 'admin_user_tab.dart';
 import 'admin_community_tab.dart';
 import 'admin_rider_cafe_tab.dart';
+import 'admin_reported_content_tab.dart';
+import 'admin_content_filter_screen.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({Key? key}) : super(key: key);
@@ -15,7 +17,7 @@ class AdminMainScreen extends StatefulWidget {
 
 class _AdminMainScreenState extends State<AdminMainScreen> {
   String _selectedTab = '관리자계정';
-  final List<String> _tabs = ['관리자계정', '배너 광고', '이벤트', '사용자', '커뮤니티', '라이더카페'];
+  final List<String> _tabs = ['관리자계정', '배너 광고', '이벤트', '사용자', '커뮤니티', '라이더카페', '신고관리', '금칙어관리'];
   bool _isSelectionMode = false;
 
   @override
@@ -57,8 +59,8 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       ];
     }
 
-    // 사용자, 커뮤니티 탭일 때는 선택 버튼 표시
-    if (_selectedTab == '사용자' || _selectedTab == '커뮤니티' || _selectedTab == '라이더카페') {
+    // 사용자, 커뮤니티, 신고관리 탭일 때는 선택 버튼 표시
+    if (_selectedTab == '사용자' || _selectedTab == '커뮤니티' || _selectedTab == '라이더카페' || _selectedTab == '신고관리') {
       return [
         TextButton(
           onPressed: () {
@@ -138,6 +140,10 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         return AdminRiderCafeTab(isSelectionMode: _isSelectionMode);
       case '이벤트':
         return AdminEventTab();
+      case '신고관리':
+        return AdminReportedContentTab(isSelectionMode: _isSelectionMode);
+      case '금칙어관리':
+        return const AdminContentFilterScreen();
       default:
         return SizedBox.shrink();
     }

@@ -4,6 +4,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  // 관리자 목록 가져오기
+  Future<List<String>> getAdminIds() async {
+    try {
+      final adminsQuery = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'admin')
+          .get();
+          
+      return adminsQuery.docs.map((doc) => doc.id).toList();
+    } catch (e) {
+      print('관리자 목록 가져오기 실패: $e');
+      return [];
+    }
+  }
 
   // 알림 생성
   Future<void> createNotification({
@@ -212,6 +227,56 @@ class NotificationService {
     } catch (e) {
       print('알림 삭제 실패: $e');
       rethrow;
+    }
+  }
+  
+  // 모든 관리자에게 신고된 콘텐츠 알림 보내기
+  Future<void> notifyAdminsAboutReportedContent({
+    required String contentId,
+    required String contentType,
+    required String reason,
+    String? reporterId,
+    bool isAutoDetected = false,
+  }) async {
+    try {
+      final adminIds = await getAdminIds();
+      if (adminIds.isEmpty) return;
+      
+      final batch = _firestore.batch();
+      
+      for (String adminId in adminIds) {
+        final notificationRef = _firestore
+            .collection('users')
+            .doc(adminId)
+            .collection('notifications')
+            .doc();
+            
+        final notificationData = {
+          'title': '신고된 콘텐츠',
+          'message': isAutoDetected 
+              ? '시스템이 부적절한 콘텐츠를 감지했습니다: $reason'
+              : '사용자가 ${contentType == 'post' ? '게시글' : '댓글'}을 신고했습니다: $reason',
+          'type': 'reported_content',
+          'timestamp': FieldValue.serverTimestamp(),
+          'isRead': false,
+          'targetId': contentId,
+          'contentType': contentType,
+          'userId': reporterId ?? 'system',
+          'metadata': {
+            'reportReason': reason,
+            'contentId': contentId,
+            'contentType': contentType,
+            'isAutoDetected': isAutoDetected,
+            'reportTimestamp': FieldValue.serverTimestamp(),
+          }
+        };
+        
+        batch.set(notificationRef, notificationData);
+      }
+      
+      await batch.commit();
+    } catch (e) {
+      print('관리자 알림 전송 실패: $e');
     }
   }
 }

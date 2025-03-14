@@ -132,6 +132,9 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         'nickname': userNickname,
         'likeCount': 0,
         'viewCount': 0,
+        'reportStatus': '', // 기본 상태 추가
+        'isReported': false, // 신고 여부
+        'reportCount': 0, // 신고 수 
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

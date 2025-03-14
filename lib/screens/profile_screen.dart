@@ -223,6 +223,46 @@ class _ProfileScreenState extends State<ProfileScreen>
       );
     }
   }
+  
+  Future<void> _handleDeleteAccount() async {
+    // 회원 탈퇴 확인 다이얼로그
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('회원 탈퇴'),
+        content: Text('정말로 탈퇴하시겠습니까? 이 작업은 취소할 수 없으며, 모든 데이터가 삭제됩니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('탈퇴하기', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm != true) return;
+    
+    try {
+      setState(() => _isLoading = true);
+      final authService = Provider.of<AuthService>(context, listen: false);
+      await authService.deleteAccount();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('계정이 성공적으로 삭제되었습니다')),
+      );
+      Navigator.of(context).pushReplacementNamed('/');
+    } catch (e) {
+      setState(() => _isLoading = false);
+      print('Error deleting account: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
 
   Widget _buildProfileInfo() {
     return Container(
@@ -301,6 +341,28 @@ class _ProfileScreenState extends State<ProfileScreen>
                 },
               ),
             ],
+          ),
+          SizedBox(height: 20),
+          // 회원 탈퇴 버튼
+          InkWell(
+            onTap: _handleDeleteAccount,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.delete_forever, color: Colors.red[300], size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    '회원 탈퇴',
+                    style: TextStyle(
+                      color: Colors.red[300],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

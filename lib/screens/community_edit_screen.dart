@@ -28,7 +28,7 @@ class CommunityEditScreen extends StatefulWidget {
 class _CommunityEditScreenState extends State<CommunityEditScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  final List<String> _categories = ['장비튜닝', '라이더뉴스', '자유주제'];
+  final List<String> _categories = ['자유주제', '장비튜닝', '라이더뉴스'];
 
   String _selectedCategory = '';
   File? _imageFile;

@@ -86,6 +86,31 @@ class AuthService with ChangeNotifier {
     notifyListeners();
   }
 
+  // 회원 탈퇴
+  Future<void> deleteAccount() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        // Firestore에서 사용자 데이터 삭제
+        await _firestore.collection('users').doc(user.uid).delete();
+        
+        // Firebase Auth에서 사용자 계정 삭제
+        await user.delete();
+        
+        // 로그아웃 처리
+        await signOut();
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        // 민감한 작업을 수행하기 위해 재인증이 필요한 경우
+        throw '보안을 위해 다시 로그인한 후 시도해주세요.';
+      }
+      throw '계정 삭제 중 오류가 발생했습니다: ${e.message}';
+    } catch (e) {
+      throw '계정 삭제 중 오류가 발생했습니다: $e';
+    }
+  }
+
   Future<UserCredential?> signUp({
     required String email,
     required String password,
