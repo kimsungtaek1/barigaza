@@ -15,11 +15,12 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {  // 위젯이 여전히 존재하는지 확인
-        _loadAd();
-      }
-    });
+    // 앱 심사 통과 후 주석 제거
+    // Future.delayed(const Duration(milliseconds: 100), () {
+    //   if (mounted) {  // 위젯이 여전히 존재하는지 확인
+    //     _loadAd();
+    //   }
+    // });
   }
 
   Future<void> _loadAd() async {
@@ -36,7 +37,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
     _bannerAd = BannerAd(
       size: adSize,
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111',
+      adUnitId: 'ca-app-pub-5611049369649522/5462982608',
       listener: BannerAdListener(
         onAdLoaded: (_) {
           setState(() {
@@ -60,19 +61,27 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isLoaded || _bannerAd == null) {
-      return Container(
-        width: MediaQuery.of(context).size.width,  // 전체 너비
-        height: 50,  // 명시적 높이
-        color: Colors.transparent,
-      );
-    }
-
+    // 앱 심사 통과 후 주석 제거
+    // if (!_isLoaded || _bannerAd == null) {
+    //   return Container(
+    //     width: MediaQuery.of(context).size.width,  // 전체 너비
+    //     height: 50,  // 명시적 높이
+    //     color: Colors.transparent,
+    //   );
+    // }
+    // 
+    // return Container(
+    //   width: MediaQuery.of(context).size.width,  // 전체 너비
+    //   height: 50,  // 명시적 높이
+    //   color: Colors.white,
+    //   child: AdWidget(ad: _bannerAd!),
+    // );
+    
+    // 앱 심사용 임시 흰색 배경 컨테이너
     return Container(
       width: MediaQuery.of(context).size.width,  // 전체 너비
       height: 50,  // 명시적 높이
       color: Colors.white,
-      child: AdWidget(ad: _bannerAd!),
     );
   }
 

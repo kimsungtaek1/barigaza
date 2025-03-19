@@ -171,6 +171,10 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       // 단기예보 응답 파싱 (TMN, TMX)
       if (fcstResponse.statusCode == 200) {
         final data = json.decode(fcstResponse.body);
+        print("===== 단기예보 전체 응답 데이터 =====");
+        print(fcstResponse.body);
+        print("===================================");
+        
         // 응답 헤더의 resultCode가 "03"이면 NO_DATA
         if (data['response']['header']['resultCode'] == "03") {
           print("Forecast API returned NO_DATA. 예보 데이터가 없습니다.");
@@ -181,6 +185,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
               String category = item['category'];
               String value = item['fcstValue'];
               if (category == 'TMN' || category == 'TMX') {
+                print("날씨 데이터 발견: $category = $value");
                 weatherInfo[category] = value;
               }
             }
@@ -195,11 +200,16 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       // 초단기실황 응답 파싱 (T1H, SKY, PTY)
       if (ncstResponse.statusCode == 200) {
         final data = json.decode(ncstResponse.body);
+        print("===== 초단기실황 전체 응답 데이터 =====");
+        print(ncstResponse.body);
+        print("===================================");
+        
         final items = data['response']?['body']?['items']?['item'];
         if (items != null) {
           for (var item in items) {
             String category = item['category'];
             String value = item['obsrValue'];
+            print("초단기실황 데이터: $category = $value");
             if (['T1H', 'SKY', 'PTY'].contains(category)) {
               if (category == 'T1H') {
                 weatherInfo['TMP'] = value; // T1H를 TMP로 변환하여 현재 기온으로 저장

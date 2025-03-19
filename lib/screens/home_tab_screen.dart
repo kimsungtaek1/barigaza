@@ -248,7 +248,14 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Image.asset('assets/images/brg_logo.png', height: 24),
+        title: Text(
+          'BRG',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
+          ),
+        ),
         backgroundColor: Colors.white,
         actions: [
           IconButton(

@@ -340,4 +340,82 @@ class ChatService {
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
   }
+  
+  // 사용자 차단하기
+  Future<void> blockUser(String blockedUserId) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) throw Exception('로그인이 필요합니다');
+    
+    try {
+      // 사용자의 차단 목록에 추가
+      await _firestore.collection('users').doc(currentUser.uid).update({
+        'blockedUsers': FieldValue.arrayUnion([blockedUserId])
+      });
+      
+      // 차단 기록 저장
+      await _firestore.collection('userBlocks').add({
+        'blockedBy': currentUser.uid,
+        'blockedUser': blockedUserId,
+        'blockedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('사용자 차단 중 오류 발생: $e');
+      throw Exception('사용자 차단에 실패했습니다');
+    }
+  }
+  
+  // 차단 해제하기
+  Future<void> unblockUser(String blockedUserId) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) throw Exception('로그인이 필요합니다');
+    
+    try {
+      // 사용자의 차단 목록에서 제거
+      await _firestore.collection('users').doc(currentUser.uid).update({
+        'blockedUsers': FieldValue.arrayRemove([blockedUserId])
+      });
+      
+      // 차단 기록 업데이트
+      final blockDocs = await _firestore
+          .collection('userBlocks')
+          .where('blockedBy', isEqualTo: currentUser.uid)
+          .where('blockedUser', isEqualTo: blockedUserId)
+          .get();
+          
+      for (var doc in blockDocs.docs) {
+        await doc.reference.update({
+          'unblockedAt': FieldValue.serverTimestamp(),
+          'isActive': false,
+        });
+      }
+    } catch (e) {
+      print('차단 해제 중 오류 발생: $e');
+      throw Exception('차단 해제에 실패했습니다');
+    }
+  }
+  
+  // 사용자가 차단한 유저 목록 가져오기
+  Future<List<String>> getBlockedUsers() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return [];
+    
+    try {
+      final userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
+      if (!userDoc.exists) return [];
+      
+      final data = userDoc.data();
+      if (data == null || !data.containsKey('blockedUsers')) return [];
+      
+      return List<String>.from(data['blockedUsers'] ?? []);
+    } catch (e) {
+      print('차단 목록 조회 중 오류 발생: $e');
+      return [];
+    }
+  }
+  
+  // 차단된 사용자인지 확인
+  Future<bool> isUserBlocked(String userId) async {
+    final blockedUsers = await getBlockedUsers();
+    return blockedUsers.contains(userId);
+  }
 }

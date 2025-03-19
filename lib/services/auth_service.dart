@@ -117,7 +117,8 @@ class AuthService with ChangeNotifier {
     required String nickname,
     required String name,
     required String phone,
-    String? gender, required String role,
+    String? gender, 
+    required String role,
   }) async {
     try {
       // 1. Firebase Auth로 사용자 계정 생성

@@ -111,7 +111,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '성별',
+          '성별 (선택사항)',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -335,7 +335,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: !_isLoading && _isPhoneVerified
+                      onPressed: !_isLoading 
                           ? _handleSignUp
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -492,12 +492,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   /// 회원가입 처리 (전화번호 인증 후 이메일/비밀번호 계정 생성 및 Firestore 저장)
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!_isPhoneVerified || _selectedGender == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('필수 항목을 모두 완료해주세요')),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
 
@@ -520,7 +514,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'name': _nameController.text,
           'nickname': _nickController.text,
           'phone': _phoneController.text,
-          'gender': _selectedGender!,
+          'gender': _selectedGender, // 선택 사항이므로 null 가능
           'role': 'normal', // 기본 역할 지정
           'isPhoneVerified': _isPhoneVerified,
           'createdAt': FieldValue.serverTimestamp(),
@@ -549,7 +543,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             'name': _nameController.text,
             'nickname': _nickController.text,
             'phone': _phoneController.text,
-            'gender': _selectedGender!,
+            'gender': _selectedGender, // 선택 사항이므로 null 가능
             'role': 'normal',
             'isPhoneVerified': _isPhoneVerified,
             'createdAt': FieldValue.serverTimestamp(),
@@ -565,7 +559,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             'name': _nameController.text,
             'nickname': _nickController.text,
             'phone': _phoneController.text,
-            'gender': _selectedGender!,
+            'gender': _selectedGender, // 선택 사항이므로 null 가능
             'role': 'normal',
             'isPhoneVerified': _isPhoneVerified,
             'createdAt': FieldValue.serverTimestamp(),
