@@ -107,15 +107,15 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
     _cafesSubscription?.cancel();
     _cafesSubscription =
         FirebaseFirestore.instance.collection('cafes').snapshots().listen(
-      (snapshot) {
-        if (!_disposed && _isMapReady) {
-          _updateMarkers(snapshot.docs);
-        }
-      },
-      onError: (error) {
-        debugPrint('Error in cafes stream: $error');
-      },
-    );
+              (snapshot) {
+            if (!_disposed && _isMapReady) {
+              _updateMarkers(snapshot.docs);
+            }
+          },
+          onError: (error) {
+            debugPrint('Error in cafes stream: $error');
+          },
+        );
   }
 
   Future<void> _updateMarkers(List<QueryDocumentSnapshot> docs) async {
@@ -124,7 +124,7 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
     try {
       final Set<String> currentIds = docs.map((doc) => doc.id).toSet();
       final List<String> markersToRemove =
-          _markersMap.keys.where((key) => !currentIds.contains(key)).toList();
+      _markersMap.keys.where((key) => !currentIds.contains(key)).toList();
 
       for (final key in markersToRemove) {
         final marker = _markersMap[key];
@@ -161,15 +161,7 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
               icon: NOverlayImage.fromAssetImage('assets/images/marker.png'),
             );
 
-            final String formattedText = '''카페명: ${data['name']}
-주소: ${_formatAddress(data['address'], data['addressDetail'] ?? '')}''';
-
             if (!_isMapReady || _disposed) continue;
-
-            final infoWindow = NInfoWindow.onMarker(
-              id: 'info_${doc.id}',
-              text: formattedText,
-            );
 
             marker.setOnTapListener((NMarker marker) {
               _showCafeDetails(doc);
@@ -179,7 +171,6 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
               await _mapController!.addOverlay(marker);
               await Future.delayed(const Duration(milliseconds: 100));
               if (!_disposed && _isMapReady) {
-                marker.openInfoWindow(infoWindow);
                 _markersMap[doc.id] = marker;
               }
             }
@@ -388,7 +379,7 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
         final districts = _regionsData[_selectedRegion]?['districts'] as List?;
         if (districts != null) {
           final district = districts.firstWhere(
-            (d) => d['name'] == _selectedDistrict,
+                (d) => d['name'] == _selectedDistrict,
             orElse: () => null,
           );
           if (district != null) {
@@ -440,7 +431,7 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
             MaterialPageRoute(
               builder: (context) => const HomeScreen(initialIndex: 0),
             ),
-            (route) => false,
+                (route) => false,
           );
         }
       },
@@ -452,9 +443,9 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
           title: const Text(
             'BRG',
             style: TextStyle(
-              color: Color(0xFF585858),
-              fontWeight: FontWeight.w500,
-              fontSize: 24,
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
             ),
           ),
           actions: [
@@ -475,14 +466,6 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  const Text(
-                    '내 지역',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
                   const SizedBox(width: 12),
                   _buildRegionTypeDropdown(),
                   const SizedBox(width: 8),
@@ -544,11 +527,12 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
                 }
               },
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: Colors.black,
+              selectedItemColor: Theme.of(context).primaryColor,
               unselectedItemColor: Colors.grey,
               items: const [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
                   label: '홈',
                 ),
                 BottomNavigationBarItem(
@@ -643,7 +627,7 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
   Widget _buildDistrictDropdown() {
     final List<Map<String, dynamic>> districts = _selectedRegion != null
         ? List<Map<String, dynamic>>.from(
-            _regionsData[_selectedRegion]?['districts'] ?? [])
+        _regionsData[_selectedRegion]?['districts'] ?? [])
         : [];
 
     return PopupMenuButton<String>(

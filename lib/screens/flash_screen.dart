@@ -339,14 +339,6 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  const Text(
-                    '내 지역',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
                   const SizedBox(width: 12),
                   _buildRegionTypeDropdown(),
                   const SizedBox(width: 8),
