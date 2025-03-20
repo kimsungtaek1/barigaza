@@ -32,6 +32,20 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
     'royal_enfield': 'royal_enfield_logo.png',
     'vespa': 'vespa_logo.png',
   };
+  
+  // 제조사 이름 매핑 - 한글명과 영문명
+  Map<String, Map<String, String>> _manufacturerNameMap = {
+    'honda': {'kor': '혼다', 'eng': 'Honda'},
+    'yamaha': {'kor': '야마하', 'eng': 'Yamaha'},
+    'suzuki': {'kor': '스즈키', 'eng': 'Suzuki'},
+    'kawasaki': {'kor': '가와사키', 'eng': 'Kawasaki'},
+    'bmw': {'kor': 'BMW Motorrad', 'eng': ''},
+    'ducati': {'kor': '두카티', 'eng': 'Ducati'},
+    'triumph': {'kor': '트라이엄프', 'eng': 'Triumph'},
+    'ktm': {'kor': 'KTM', 'eng': ''},
+    'royal_enfield': {'kor': '로얄 엔필드', 'eng': 'Royal Enfield'},
+    'vespa': {'kor': '베스파', 'eng': 'Vespa'},
+  };
 
   @override
   void initState() {
@@ -203,6 +217,11 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
   }
 
   Widget _buildManufacturerButton(BuildContext context, String name, String id, String logoPath) {
+    // 매핑된 제조사 이름이 있으면 사용하고, 없으면 기존 이름 사용
+    final manufacturerInfo = _manufacturerNameMap[id.toLowerCase()];
+    final korName = manufacturerInfo?['kor'] ?? name;
+    final engName = manufacturerInfo?['eng'] ?? '';
+    
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -243,7 +262,7 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
           ),
           const SizedBox(height: 8),
           Text(
-            name,
+            korName,
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -252,6 +271,16 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          if (engName.isNotEmpty)
+            Text(
+              '($engName)',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey[600],
+                height: 1.2,
+              ),
+              textAlign: TextAlign.center,
+            ),
         ],
       ),
     );

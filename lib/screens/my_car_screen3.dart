@@ -24,11 +24,37 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
   List<CarModel> _carModels = [];
   String? selectedCarId;
   String? selectedCarName;
+  
+  // 제조사 이름 매핑 - 한글명과 영문명
+  Map<String, Map<String, String>> _manufacturerNameMap = {
+    'honda': {'kor': '혼다', 'eng': 'Honda'},
+    'yamaha': {'kor': '야마하', 'eng': 'Yamaha'},
+    'suzuki': {'kor': '스즈키', 'eng': 'Suzuki'},
+    'kawasaki': {'kor': '가와사키', 'eng': 'Kawasaki'},
+    'bmw': {'kor': 'BMW Motorrad', 'eng': ''},
+    'ducati': {'kor': '두카티', 'eng': 'Ducati'},
+    'triumph': {'kor': '트라이엄프', 'eng': 'Triumph'},
+    'ktm': {'kor': 'KTM', 'eng': ''},
+    'royal_enfield': {'kor': '로얄 엔필드', 'eng': 'Royal Enfield'},
+    'vespa': {'kor': '베스파', 'eng': 'Vespa'},
+  };
 
   @override
   void initState() {
     super.initState();
     _loadCarModels();
+  }
+  
+  // Helper method to get display name
+  String _getManufacturerDisplayName(String manufacturerId) {
+    final manufacturerInfo = _manufacturerNameMap[manufacturerId.toLowerCase()];
+    if (manufacturerInfo == null) return manufacturerId;
+    
+    final korName = manufacturerInfo['kor'] ?? '';
+    final engName = manufacturerInfo['eng'] ?? '';
+    
+    if (engName.isEmpty) return korName;
+    return '$korName($engName)';
   }
 
   Future<void> _loadCarModels() async {
@@ -97,7 +123,7 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
-              widget.manufacturer,
+              _getManufacturerDisplayName(widget.manufacturer),
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
