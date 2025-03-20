@@ -190,9 +190,10 @@ service cloud.firestore {
                (data.userDetails is map);
       }
 
-      allow read: if isAuthenticated();
-      allow list: if isAuthenticated() &&
-                 request.query.orderBy == "lastMessageTime";
+      // 게스트 사용자에게도 읽기 권한 부여
+      allow read: if true;
+      allow list: if true;
+      
       allow create: if isAuthenticated() &&
                    isValidChatRoom() &&
                    request.auth.uid in request.resource.data.users;
@@ -213,7 +214,8 @@ service cloud.firestore {
                  );
         }
 
-        allow read: if isUserInParticipants(chatRoomId);
+        // 메시지도 읽기 권한 게스트에게 부여
+        allow read: if true;
         allow create: if isUserInParticipants(chatRoomId) &&
                        isValidMessage();
         allow update: if isUserInParticipants(chatRoomId);
@@ -221,14 +223,14 @@ service cloud.firestore {
       }
 
       match /typingStatus/{userId} {
-        allow read: if isUserInParticipants(chatRoomId);
+        allow read: if true;
         allow write: if isAuthenticated() &&
                     request.auth.uid == userId &&
                     isUserInParticipants(chatRoomId);
       }
 
       match /readStatus/{userId} {
-        allow read: if isUserInParticipants(chatRoomId);
+        allow read: if true;
         allow write: if isAuthenticated() &&
                     request.auth.uid == userId &&
                     isUserInParticipants(chatRoomId);
@@ -245,7 +247,7 @@ service cloud.firestore {
                  data.timestamp is timestamp;
         }
 
-        allow read: if isUserInParticipants(chatRoomId);
+        allow read: if true;
         allow create: if isUserInParticipants(chatRoomId) &&
                      isValidAttachment();
         allow update, delete: if false;
@@ -341,16 +343,17 @@ service cloud.firestore {
     // 게시물 컬렉션 규칙
     // ─────────────────────────────
     match /posts/{postId} {
-      allow read: if isAuthenticated();
+      // 게스트 사용자도 게시물 읽기 허용
+      allow read: if true;
       allow write: if isAuthenticated();
 
       match /likes/{userId} {
-        allow read: if isAuthenticated();
+        allow read: if true;
         allow write: if isAuthenticated() && request.auth.uid == userId;
       }
 
       match /comments/{commentId} {
-        allow read: if isAuthenticated();
+        allow read: if true;
         allow write: if isAuthenticated();
 
         // 댓글 신고 컬렉션 추가
@@ -457,7 +460,8 @@ service cloud.firestore {
           (!data.keys().hasAny(['createdAt']) || data.createdAt is timestamp);
       }
 
-      allow read: if isAuthenticated();
+      // 게스트 사용자도 모임 목록을 볼 수 있게 함
+      allow read: if true;
       allow create: if isAuthenticated() &&
                    isValidMeeting() &&
                    request.resource.data.hostId == request.auth.uid;
@@ -481,10 +485,8 @@ service cloud.firestore {
                  request.resource.data.status in ['approved', 'rejected'];
         }
 
-        allow read: if isAuthenticated() && (
-          resource.data.userId == request.auth.uid ||
-          get(/databases/$(database)/documents/meetings/$(meetingId)).data.hostId == request.auth.uid
-        );
+        // 읽기 권한 게스트에게 부여
+        allow read: if true;
 
         allow create: if isAuthenticated() &&
           isValidRequest() &&
@@ -512,7 +514,8 @@ service cloud.firestore {
             (!data.keys().hasAny(['profileImage']) || data.profileImage is string);
         }
 
-        allow read: if isAuthenticated();
+        // 참여자 정보 게스트도 볼 수 있게 함
+        allow read: if true;
         allow create: if isAuthenticated() &&
                      isValidParticipant() &&
                      request.resource.data.userId == request.auth.uid;
@@ -535,7 +538,8 @@ service cloud.firestore {
             data.createdAt is timestamp;
         }
 
-        allow read: if isAuthenticated();
+        // 댓글도 게스트가 볼 수 있게 함
+        allow read: if true;
         allow create: if isAuthenticated() &&
                      isValidComment() &&
                      request.resource.data.userId == request.auth.uid;

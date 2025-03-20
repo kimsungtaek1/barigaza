@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({Key? key}) : super(key: key);
@@ -11,10 +12,50 @@ class AdminLoginScreen extends StatefulWidget {
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _idController = TextEditingController(text: '');
-  final _passwordController = TextEditingController(text: '');
+  final _idController = TextEditingController(text: 'kstbook@naver.com');
+  final _passwordController = TextEditingController(text: 'korea3');
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _saveId = false;
+  
+  static const String _savedAdminIdKey = 'saved_admin_id';
+  
+  @override
+  void initState() {
+    super.initState();
+    // 저장된 관리자 아이디 불러오기
+    _loadSavedId();
+  }
+  
+  // 저장된 아이디 불러오기
+  Future<void> _loadSavedId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedId = prefs.getString(_savedAdminIdKey);
+      if (savedId != null && savedId.isNotEmpty) {
+        setState(() {
+          _idController.text = savedId;
+          _saveId = true;
+        });
+      }
+    } catch (e) {
+      print('Error loading saved admin ID: $e');
+    }
+  }
+  
+  // 아이디 저장하기
+  Future<void> _saveAdminId(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_saveId) {
+        await prefs.setString(_savedAdminIdKey, id);
+      } else {
+        await prefs.remove(_savedAdminIdKey);
+      }
+    } catch (e) {
+      print('Error saving admin ID: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +147,45 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    children: [
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          checkboxTheme: CheckboxThemeData(
+                            fillColor: MaterialStateProperty.resolveWith<Color>(
+                              (Set<MaterialState> states) {
+                                if (states.contains(MaterialState.selected)) {
+                                  return Colors.white;
+                                }
+                                return Colors.white;
+                              },
+                            ),
+                            checkColor: MaterialStateProperty.all(Colors.blue),
+                          ),
+                        ),
+                        child: Checkbox(
+                          value: _saveId,
+                          onChanged: (value) {
+                            setState(() {
+                              _saveId = value ?? false;
+                            });
+                          },
+                          side: BorderSide(color: Colors.white),
+                        ),
+                      ),
+                      Text(
+                        '아이디 저장',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -195,6 +274,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 아이디 저장 처리
+      await _saveAdminId(_idController.text);
+      
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _idController.text,
         password: _passwordController.text,

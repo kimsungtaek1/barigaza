@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,14 +13,47 @@ class _LoginScreenState extends State<LoginScreen> {
   final _idController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _saveId = false;
+  
+  static const String _savedIdKey = 'saved_user_id';
 
   @override
   void initState() {
     super.initState();
-    _idController.text = '';
-    _idController.notifyListeners();
+    // 저장된 아이디 불러오기
+    _loadSavedId();
     _passwordController.text = '';
     _passwordController.notifyListeners();
+  }
+  
+  // 저장된 아이디 불러오기
+  Future<void> _loadSavedId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedId = prefs.getString(_savedIdKey);
+      if (savedId != null && savedId.isNotEmpty) {
+        setState(() {
+          _idController.text = savedId;
+          _saveId = true;
+        });
+      }
+    } catch (e) {
+      print('Error loading saved ID: $e');
+    }
+  }
+  
+  // 아이디 저장하기
+  Future<void> _saveUserId(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_saveId) {
+        await prefs.setString(_savedIdKey, id);
+      } else {
+        await prefs.remove(_savedIdKey);
+      }
+    } catch (e) {
+      print('Error saving ID: $e');
+    }
   }
 
   @override
@@ -115,7 +149,45 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                   ),
-                  SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: [
+                        Theme(
+                          data: Theme.of(context).copyWith(
+                            checkboxTheme: CheckboxThemeData(
+                              fillColor: MaterialStateProperty.resolveWith<Color>(
+                                (Set<MaterialState> states) {
+                                  if (states.contains(MaterialState.selected)) {
+                                    return Colors.white;
+                                  }
+                                  return Colors.white;
+                                },
+                              ),
+                              checkColor: MaterialStateProperty.all(Colors.blue),
+                            ),
+                          ),
+                          child: Checkbox(
+                            value: _saveId,
+                            onChanged: (value) {
+                              setState(() {
+                                _saveId = value ?? false;
+                              });
+                            },
+                            side: BorderSide(color: Colors.white),
+                          ),
+                        ),
+                        Text(
+                          '아이디 저장',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8),
                   TextButton(
                     onPressed: _handleGuestMode,
                     style: TextButton.styleFrom(
@@ -257,6 +329,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 아이디 저장 처리
+      await _saveUserId(_idController.text);
+      
       final authService = Provider.of<AuthService>(context, listen: false);
       final success = await authService.signInWithEmail(
         _idController.text,
