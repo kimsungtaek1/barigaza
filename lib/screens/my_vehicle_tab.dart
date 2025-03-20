@@ -288,13 +288,33 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '[${_userData['bikeManufacturer'] ?? '제조사 미등록'}] ${_userData['bikeName'] ?? '차량 미등록'} ${_userData['bikeNumber'] ?? '번호판 미등록'}',
+                    '[${_userData['bikeManufacturer'] ?? '제조사 미등록'}] ${_userData['bikeName'] ?? '차량 미등록'}',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        '현재 주행거리: ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        '${(_userData['currentMileage'] ?? 0).toString()} km',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF756C54),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6),
                   Row(
                     children: [
                       Text(

@@ -1,28 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 
 import '../widgets/ad_banner_widget.dart';
+import 'home_screen.dart';
 
-class MyCarScreen5 extends StatelessWidget {
+class MyCarScreen5 extends StatefulWidget {
   final String manufacturer;
   final String? carNumber;
   final String carName;
-  final String modelName;
 
   const MyCarScreen5({
     Key? key,
     required this.manufacturer,
     this.carNumber,
     required this.carName,
-    required this.modelName,
   }) : super(key: key);
 
-  Future<void> _saveBikeInfo(BuildContext context) async {
+  @override
+  State<MyCarScreen5> createState() => _MyCarScreen5State();
+}
+
+class _MyCarScreen5State extends State<MyCarScreen5> {
+  final TextEditingController _mileageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _mileageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveBikeInfo() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        if (context.mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('로그인이 필요합니다.'),
@@ -33,41 +46,45 @@ class MyCarScreen5 extends StatelessWidget {
         return;
       }
 
+      // 주행거리 값 파싱
+      int currentMileage = 0;
+      if (_mileageController.text.isNotEmpty) {
+        currentMileage = int.tryParse(_mileageController.text) ?? 0;
+      }
+
       // Firestore에 바이크 정보 저장
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'bikeManufacturer': manufacturer,
-        'bikeNumber': carNumber,
-        'bikeName': carName,
-        'bikeModel': modelName,
+        'bikeManufacturer': widget.manufacturer,
+        'bikeName': widget.carName,
         'hasBikeInfo': true,
-        'currentMileage': 0,  // 초기 주행거리 0으로 설정
+        'currentMileage': currentMileage,  // 입력받은 주행거리 값 사용
         'lastUpdated': FieldValue.serverTimestamp(),
         // 초기 교체 주기 설정
         'lastMaintenance': {
           'engineOil': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'oilFilter': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'chain': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'battery': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'sparkPlug': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
         },
       });
 
-      if (context.mounted) {
+      if (mounted) {
         // 성공 메시지 표시
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -75,15 +92,17 @@ class MyCarScreen5 extends StatelessWidget {
             backgroundColor: Colors.green,
           ),
         );
-        // 홈 화면으로 이동
-        Navigator.pushNamedAndRemoveUntil(
+        // 내 차 화면으로 이동
+        Navigator.pushAndRemoveUntil(
           context,
-          '/home', // 홈 화면의 라우트 이름
-              (route) => false,
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(initialIndex: 2),
+          ),
+          (route) => false,
         );
       }
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('차량 정보 등록에 실패했습니다: $e'),
@@ -123,32 +142,6 @@ class MyCarScreen5 extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              if (carNumber != null) ...[
-                const Text(
-                  '차량 번호',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    carNumber!,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
               const Text(
                 '제조사',
                 style: TextStyle(
@@ -165,7 +158,7 @@ class MyCarScreen5 extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  manufacturer,
+                  widget.manufacturer,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -174,7 +167,7 @@ class MyCarScreen5 extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               const Text(
-                '차량 이름',
+                '모델',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
@@ -189,7 +182,7 @@ class MyCarScreen5 extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  carName,
+                  widget.carName,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -197,8 +190,9 @@ class MyCarScreen5 extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              // 주행거리 입력 영역
               const Text(
-                '모델명',
+                '현재 주행거리 (km)',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
@@ -212,11 +206,16 @@ class MyCarScreen5 extends StatelessWidget {
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  modelName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                child: TextField(
+                  controller: _mileageController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: '현재 주행거리 입력 (km)',
+                    suffixText: 'km',
                   ),
                 ),
               ),
@@ -224,7 +223,7 @@ class MyCarScreen5 extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _saveBikeInfo(context),
+                  onPressed: _saveBikeInfo,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF746B5D),
                     foregroundColor: Colors.white,

@@ -36,7 +36,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   Map<String, dynamic> _userData = {};
   String? _profileImage;
   String? _bikeImageUrl;
-  String? _selectedBikeModel;
   File? _profileFile;
   File? _bikeImageFile;
 
@@ -63,7 +62,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             _profileImage = userData['profileImage'];
             _bikeImageUrl = userData['bikeImage'];
             _selectedGender = userData['gender'] ?? '';
-            _selectedBikeModel = userData['bikeModel'] ?? '';
             _isLoading = false;
             _userData = userData;
           });
@@ -537,7 +535,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         'phone': _phoneController.text.trim(),
         'description': _descriptionController.text.trim(),
         'gender': _selectedGender,
-        'bikeModel': _selectedBikeModel,
         'lastUpdated': FieldValue.serverTimestamp(),
       };
 

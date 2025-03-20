@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_account_tab.dart';
 import 'admin_banner_tab.dart';
 import 'admin_event_tab.dart';
@@ -7,6 +8,7 @@ import 'admin_community_tab.dart';
 import 'admin_rider_cafe_tab.dart';
 import 'admin_reported_content_tab.dart';
 import 'admin_content_filter_screen.dart';
+import 'admin_car_model_tab.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({Key? key}) : super(key: key);
@@ -17,9 +19,10 @@ class AdminMainScreen extends StatefulWidget {
 
 class _AdminMainScreenState extends State<AdminMainScreen> {
   String _selectedTab = '관리자계정';
-  final List<String> _tabs = ['관리자계정', '배너 광고', '이벤트', '사용자', '커뮤니티', '라이더카페', '신고관리', '금칙어관리'];
+  final List<String> _tabs = ['관리자계정', '배너 광고', '이벤트', '사용자', '커뮤니티', '라이더카페', '신고관리', '금칙어관리', '차량모델'];
   bool _isSelectionMode = false;
-
+  final List<String> _selectedItems = [];
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,13 +62,16 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       ];
     }
 
-    // 사용자, 커뮤니티, 신고관리 탭일 때는 선택 버튼 표시
+    // 사용자, 커뮤니티, 신고관리, 라이더카페 탭일 때는 선택 버튼 표시
     if (_selectedTab == '사용자' || _selectedTab == '커뮤니티' || _selectedTab == '라이더카페' || _selectedTab == '신고관리') {
       return [
         TextButton(
           onPressed: () {
             setState(() {
               _isSelectionMode = !_isSelectionMode;
+              if (!_isSelectionMode) {
+                _selectedItems.clear();
+              }
             });
           },
           child: Text(
@@ -73,6 +79,14 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
             style: const TextStyle(color: Colors.black),
           ),
         ),
+        if (_isSelectionMode && _selectedItems.isNotEmpty)
+          TextButton(
+            onPressed: _handleDelete,
+            child: const Text(
+              '삭제',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
       ];
     }
 
@@ -126,6 +140,25 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     );
   }
 
+  void _handleSelectionChanged(List<String> selectedItems) {
+    setState(() {
+      _selectedItems.clear();
+      _selectedItems.addAll(selectedItems);
+    });
+  }
+
+  Future<void> _handleDelete() async {
+    // 탭에 따라 다른 삭제 로직 처리
+    if (_selectedTab == '차량모델') {
+      // 차량 모델 삭제 처리
+      // 향후 구현 예정
+    }
+
+    setState(() {
+      _selectedItems.clear();
+    });
+  }
+  
   Widget _buildContent() {
     switch (_selectedTab) {
       case '관리자계정':
@@ -144,6 +177,16 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         return AdminReportedContentTab(isSelectionMode: _isSelectionMode);
       case '금칙어관리':
         return const AdminContentFilterScreen();
+      case '차량모델':
+        return AdminCarModelTab(
+          selectionMode: _isSelectionMode,
+          onSelectionModeChanged: (value) {
+            setState(() {
+              _isSelectionMode = value;
+            });
+          },
+          onSelectionChanged: _handleSelectionChanged,
+        );
       default:
         return SizedBox.shrink();
     }

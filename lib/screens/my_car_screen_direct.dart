@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import '../widgets/ad_banner_widget.dart';
+import 'home_screen.dart';
 
 class MyCarScreenDirect extends StatefulWidget {
   const MyCarScreenDirect({Key? key}) : super(key: key);
@@ -19,14 +21,14 @@ class _MyCarScreenDirectState extends State<MyCarScreenDirect> {
   final TextEditingController _modelController1 = TextEditingController();
   // step 2: 제조사 (bikeManufacturer)
   final TextEditingController _manufacturerController = TextEditingController();
-  // step 3: 모델명 (bikeModel)
-  final TextEditingController _modelController2 = TextEditingController();
+  // step 3: 현재 주행거리
+  final TextEditingController _mileageController = TextEditingController();
 
   @override
   void dispose() {
     _modelController1.dispose();
     _manufacturerController.dispose();
-    _modelController2.dispose();
+    _mileageController.dispose();
     super.dispose();
   }
 
@@ -46,37 +48,40 @@ class _MyCarScreenDirectState extends State<MyCarScreenDirect> {
         return;
       }
 
+      // 현재 주행거리 파싱
+      int currentMileage = 0;
+      if (_mileageController.text.isNotEmpty) {
+        currentMileage = int.tryParse(_mileageController.text) ?? 0;
+      }
+
       // Firestore에 차량 정보 업데이트
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'bikeManufacturer': _manufacturerController.text.trim(),
-        // 직접 등록에서는 차량 번호 입력란이 없으므로 빈 문자열로 처리합니다.
-        'bikeNumber': '',
         'bikeName': _modelController1.text.trim(),
-        'bikeModel': _modelController2.text.trim(),
         'hasBikeInfo': true,
-        'currentMileage': 0, // 초기 주행거리 0으로 설정
+        'currentMileage': currentMileage, // 입력받은 주행거리 설정
         'lastUpdated': FieldValue.serverTimestamp(),
         // 초기 교체 주기 설정
         'lastMaintenance': {
           'engineOil': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'oilFilter': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'chain': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'battery': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
           'sparkPlug': {
             'date': DateTime.now().toIso8601String(),
-            'mileage': 0,
+            'mileage': currentMileage,
           },
         },
       });
@@ -88,7 +93,13 @@ class _MyCarScreenDirectState extends State<MyCarScreenDirect> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(initialIndex: 2),
+          ),
+          (route) => false,
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -138,11 +149,7 @@ class _MyCarScreenDirectState extends State<MyCarScreenDirect> {
           hintText: '제조사 입력',
         );
       case 3:
-        return _buildInputStep(
-          label: '모델을 입력해 주세요.',
-          controller: _modelController2,
-          hintText: '모델명 입력',
-        );
+        return _buildMileageInputStep();
       case 4:
         return _buildCompletionStep();
       default:
@@ -221,6 +228,74 @@ class _MyCarScreenDirectState extends State<MyCarScreenDirect> {
     );
   }
 
+  Widget _buildMileageInputStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '현재 주행거리를 입력해 주세요.',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 30),
+        const Text(
+          '현재 주행거리 (km)',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: TextField(
+            controller: _mileageController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              hintText: '현재 주행거리 입력 (km)',
+              suffixText: 'km',
+            ),
+          ),
+        ),
+        const SizedBox(height: 40),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              _nextStep();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF746B5D),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              '다음',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCompletionStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,6 +306,21 @@ class _MyCarScreenDirectState extends State<MyCarScreenDirect> {
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          '제조사: ${_manufacturerController.text}',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          '차량 이름: ${_modelController1.text}',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          '현재 주행거리: ${_mileageController.text.isEmpty ? "0" : _mileageController.text}km',
+          style: const TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 40),
         // "완료" 버튼 클릭 시 _saveBikeInfo() 함수가 호출되어 회원 정보를 업데이트합니다.

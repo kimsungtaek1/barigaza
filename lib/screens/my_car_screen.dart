@@ -10,40 +10,8 @@ class MyCarScreen extends StatefulWidget {
 }
 
 class _MyCarScreenState extends State<MyCarScreen> {
-  final TextEditingController _pinController = TextEditingController();
-  bool _isValid = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _pinController.addListener(_validateInput);
-  }
-
-  void _validateInput() {
-    setState(() {
-      _isValid = _pinController.text.isNotEmpty;
-    });
-  }
 
   void _navigateToNextScreen() {
-    if (_isValid) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MyCarScreen2(carNumber: _pinController.text),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('차량 번호를 입력해주세요'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  void _skipAndNavigate() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -77,27 +45,13 @@ class _MyCarScreenState extends State<MyCarScreen> {
             ),
             const SizedBox(height: 40),
             const Text(
-              '차량 번호를 입력해 주세요.',
+              '바이크 정보를 등록하시겠습니까?',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _pinController,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.grey[100],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-                hintText: '0000',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -113,15 +67,6 @@ class _MyCarScreenState extends State<MyCarScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Center(
-              child: TextButton(
-                onPressed: _skipAndNavigate,
-                child: const Text(
-                  '건너뛰기',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-            ),
           ],
         ),
       ),

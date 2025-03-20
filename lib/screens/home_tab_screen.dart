@@ -89,7 +89,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         });
       }
     } catch (e) {
-      if (_mounted) debugPrint('위치 정보 오류: $e');
+      // 위치 정보 오류 발생
     }
   }
 
@@ -136,11 +136,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   void _checkUnreadNotifications() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('사용자가 로그인되지 않았습니다.');
       return;
     }
-
-    print('🔍 알림 쿼리 실행: users/${user.uid}/notifications');
 
     _notificationsSubscription?.cancel();
 
@@ -151,12 +148,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         .where('isRead', isEqualTo: false)
         .snapshots()
         .listen((snapshot) {
-      print('📢 미확인 알림 개수: ${snapshot.docs.length}');
       if (mounted) {
         setState(() => _hasUnreadNotifications = snapshot.docs.isNotEmpty);
       }
-    }, onError: (error) {
-      print('🔥 알림 쿼리 오류: $error');
     });
   }
 

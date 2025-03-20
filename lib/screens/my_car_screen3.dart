@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../services/car_model_service.dart';
+import '../models/car_model.dart';
 import '../widgets/ad_banner_widget.dart';
-import 'my_car_screen4.dart';
+import 'my_car_screen5.dart';
 
 class MyCarScreen3 extends StatefulWidget {
   final String manufacturer;
@@ -19,26 +19,35 @@ class MyCarScreen3 extends StatefulWidget {
 }
 
 class _MyCarScreen3State extends State<MyCarScreen3> {
-  List<Map<String, dynamic>> carList = [];
+  final CarModelService _carModelService = CarModelService();
+  bool _isLoading = true;
+  List<CarModel> _carModels = [];
   String? selectedCarId;
   String? selectedCarName;
 
   @override
   void initState() {
     super.initState();
-    _loadCarNames();
+    _loadCarModels();
   }
 
-  Future<void> _loadCarNames() async {
+  Future<void> _loadCarModels() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
     try {
-      final String response = await rootBundle.loadString('assets/jsons/car_names.json');
-      final data = await json.decode(response);
-
+      final models = await _carModelService.getModels(widget.manufacturer);
+      
       setState(() {
-        carList = List<Map<String, dynamic>>.from(data[widget.manufacturer]);
+        _carModels = models;
+        _isLoading = false;
       });
     } catch (e) {
-      print('Error loading car names: $e');
+      print('Error loading car models: $e');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -47,10 +56,9 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => MyCarScreen4(
+          builder: (context) => MyCarScreen5(
             manufacturer: widget.manufacturer,
             carNumber: widget.carNumber,
-            carId: selectedCarId ?? '',
             carName: selectedCarName ?? '',
           ),
         ),
@@ -97,34 +105,57 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
             ),
           ),
           const SizedBox(height: 20),
-          Expanded(
-            child: ListView.separated(
-              itemCount: carList.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final car = carList[index];
-                final isSelected = selectedCarId == car['id'];
-
-                return ListTile(
-                  title: Text(
-                    car['model'],
-                    style: TextStyle(
-                      color: isSelected ? Colors.blue : Colors.black,
-                    ),
+          _isLoading
+              ? Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(),
                   ),
-                  trailing: isSelected
-                      ? const Icon(Icons.check_circle, color: Colors.blue)
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      selectedCarId = car['id'];
-                      selectedCarName = car['model'];
-                    });
-                  },
-                );
-              },
-            ),
-          ),
+                )
+              : Expanded(
+                  child: _carModels.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('등록된 차량 모델이 없습니다.'),
+                              SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadCarModels,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF746B5D),
+                                ),
+                                child: Text('새로고침'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: _carModels.length,
+                          separatorBuilder: (context, index) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final car = _carModels[index];
+                            final isSelected = selectedCarId == car.id;
+
+                            return ListTile(
+                              title: Text(
+                                car.model,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.blue : Colors.black,
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? const Icon(Icons.check_circle, color: Colors.blue)
+                                  : null,
+                              onTap: () {
+                                setState(() {
+                                  selectedCarId = car.id;
+                                  selectedCarName = car.model;
+                                });
+                              },
+                            );
+                          },
+                        ),
+                ),
           if (selectedCarId != null)
             Container(
               width: double.infinity,
