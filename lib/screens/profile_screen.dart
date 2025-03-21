@@ -699,7 +699,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: _tabController.index == 1 ? Colors.white : const Color(0xFFF3F4F6),
       appBar: AppBar(
         title: Text(
           '마이페이지',
@@ -792,21 +792,33 @@ class _ProfileScreenState extends State<ProfileScreen>
               }
             },
           ),
-          SizedBox(height: 16),
+          Builder(
+            builder: (context) {
+              // 내 차량 탭(탭 인덱스가 1)에서는 SizedBox 없이 바로 표시
+              if (_tabController.index == 1) {
+                return SizedBox.shrink();
+              } else {
+                // 내 정보 탭에서는 SizedBox 유지
+                return SizedBox(height: 16);
+              }
+            },
+          ),
           // 탭 내용 - 스크롤 가능한 부분
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // 내 정보 탭
-                RefreshIndicator(
-                  onRefresh: _loadUserData,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+            child: Container(
+              color: Colors.transparent,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // 내 정보 탭
+                  RefreshIndicator(
+                    onRefresh: _loadUserData,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                           children: [
                             Text(
                               '참여중인 채팅방',
@@ -875,8 +887,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                 ),
                 // 내 차량 탭
-                MyVehicleTab(),
-              ],
+                  MyVehicleTab(),
+                ],
+              ),
             ),
           ),
         ],
