@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging && _tabController.previousIndex != _tabController.index) {
         setState(() {
-          // 탭 인덱스 변경에 따른 최소한의 업데이트만 수행
+          // 탭 인덱스 변경에 따른 UI 업데이트
         });
       }
     });
@@ -727,33 +727,70 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
       body: Column(
         children: [
-          // 상단 고정 부분 (프로필 정보 + 탭 바)
-          _buildProfileInfo(),
-          // 회원 탈퇴 섹션 밑에 카테고리 메뉴 추가
-          Container(
-            height: 60,
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey[200]!,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(left: 16),
+          Builder(
+            builder: (context) {
+              // 내 차량 탭(탭 인덱스가 1)인 경우 프로필 정보 표시하지 않음
+              if (_tabController.index == 1) {
+                return Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.grey[200]!,
+                        width: 1,
+                      ),
+                    ),
+                  ),
                   child: Row(
                     children: [
-                      _buildCategoryTab(0, '내 정보'),
-                      _buildCategoryTab(1, '내 차량'),
+                      Padding(
+                        padding: EdgeInsets.only(left: 16),
+                        child: Row(
+                          children: [
+                            _buildCategoryTab(0, '내 정보'),
+                            _buildCategoryTab(1, '내 차량'),
+                          ],
+                        ),
+                      ),
+                      Spacer(),
                     ],
                   ),
-                ),
-                Spacer(),
-              ],
-            ),
+                );
+              } else {
+                // 내 정보 탭인 경우 프로필 정보 표시
+                return Column(
+                  children: [
+                    _buildProfileInfo(),
+                    // 카테고리 메뉴
+                    Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey[200]!,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(left: 16),
+                            child: Row(
+                              children: [
+                                _buildCategoryTab(0, '내 정보'),
+                                _buildCategoryTab(1, '내 차량'),
+                              ],
+                            ),
+                          ),
+                          Spacer(),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+            },
           ),
           SizedBox(height: 16),
           // 탭 내용 - 스크롤 가능한 부분
