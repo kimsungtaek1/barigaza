@@ -164,8 +164,7 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
               id: doc.id,
               position: NLatLng(location.latitude, location.longitude),
               size: const NSize(50.0, 50.0),
-              icon: NOverlayImage.fromAssetImage('assets/images/marker.png'),
-              iconTintColor: const Color(0xFF1066FF), // primary color로 설정
+              icon: NOverlayImage.fromAssetImage('assets/images/marker.png')
             );
 
             if (!_isMapReady || _disposed) continue;
