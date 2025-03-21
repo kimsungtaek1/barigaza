@@ -151,28 +151,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               showUnselectedLabels: true,
               items: const [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  activeIcon: Icon(Icons.home),
+                  icon: ImageIcon(AssetImage('assets/images/home.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/home_selected.png')),
                   label: '홈',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.group_outlined),
-                  activeIcon: Icon(Icons.group),
+                  icon: ImageIcon(AssetImage('assets/images/community.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/community_selected.png')),
                   label: '커뮤니티',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.directions_car_outlined),
-                  activeIcon: Icon(Icons.directions_car),
+                  icon: ImageIcon(AssetImage('assets/images/motorcycle.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/motorcycle_selected.png')),
                   label: '내 차',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.flash_on_outlined),
-                  activeIcon: Icon(Icons.flash_on),
+                  icon: ImageIcon(AssetImage('assets/images/thunder.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/thunder_selected.png')),
                   label: '번개',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.chat_bubble_outline),
-                  activeIcon: Icon(Icons.chat_bubble),
+                  icon: ImageIcon(AssetImage('assets/images/chat.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/chat_selected.png')),
                   label: '채팅',
                 ),
               ],

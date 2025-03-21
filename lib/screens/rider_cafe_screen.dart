@@ -537,24 +537,28 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
               unselectedItemColor: Colors.grey,
               items: const [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  activeIcon: Icon(Icons.home),
+                  icon: ImageIcon(AssetImage('assets/images/home.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/home_selected.png')),
                   label: '홈',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.group),
+                  icon: ImageIcon(AssetImage('assets/images/community.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/community_selected.png')),
                   label: '커뮤니티',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.directions_car),
+                  icon: ImageIcon(AssetImage('assets/images/motorcycle.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/motorcycle_selected.png')),
                   label: '내 차',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.flash_on),
+                  icon: ImageIcon(AssetImage('assets/images/thunder.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/thunder_selected.png')),
                   label: '번개',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.chat),
+                  icon: ImageIcon(AssetImage('assets/images/chat.png')),
+                  activeIcon: ImageIcon(AssetImage('assets/images/chat_selected.png')),
                   label: '채팅',
                 ),
               ],
