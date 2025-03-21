@@ -35,6 +35,8 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
     super.dispose();
   }
 
+  double _previousMileage = 0.0;
+  
   Future<void> _loadLastMileage() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -47,8 +49,9 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
 
       if (userDoc.exists && userDoc.data()?['currentMileage'] != null) {
         setState(() {
-          _distanceController.text =
-              userDoc.data()!['currentMileage'].toString();
+          _previousMileage = double.parse(userDoc.data()!['currentMileage'].toString());
+          // 주행거리 필드는 빈 값으로 시작 (사용자가 추가 주행거리 입력하도록)
+          _distanceController.text = '';
         });
       }
     } catch (e) {
@@ -118,12 +121,14 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
           .collection('fuel_records')
           .add(record);
 
-      // 현재 주행거리 업데이트
+      // 현재 주행거리 업데이트 (이전 주행거리 + 추가 주행거리)
+      final updatedMileage = _previousMileage + double.parse(_distanceController.text);
+      
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .update({
-        'currentMileage': double.parse(_distanceController.text),
+        'currentMileage': updatedMileage,
         'lastFuelRecord': {
           'date': Timestamp.fromDate(DateTime.now()),
           'fuelType': selectedFuelType,

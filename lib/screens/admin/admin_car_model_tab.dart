@@ -475,7 +475,7 @@ class _AdminCarModelTabState extends State<AdminCarModelTab> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             IconButton(
-                                              icon: Icon(Icons.edit),
+                                              icon: ImageIcon(AssetImage('assets/images/pencil_selected.png')),
                                               onPressed: () => _showEditModelDialog(model),
                                             ),
                                             IconButton(

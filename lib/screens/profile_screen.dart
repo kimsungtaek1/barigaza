@@ -337,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
+                icon: ImageIcon(AssetImage('assets/images/pencil_selected.png'), color: Theme.of(context).primaryColor),
                 onPressed: () async {
                   final result = await Navigator.push(
                     context,

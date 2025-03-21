@@ -99,7 +99,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       elevation: 0,
       actions: [
         IconButton(
-          icon: Icon(Icons.edit_outlined, color: Colors.black87),
+          icon: ImageIcon(AssetImage('assets/images/pencil.png'), color: Colors.black87),
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => CommunityPostsScreen()),

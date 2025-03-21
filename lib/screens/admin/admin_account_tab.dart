@@ -139,8 +139,8 @@ class _AdminAccountTabState extends State<AdminAccountTab> {
           if (showEdit)
             GestureDetector(
               onTap: () => _showEditDialog(label.toLowerCase()),
-              child: Icon(
-                Icons.edit,
+              child: ImageIcon(
+                AssetImage('assets/images/pencil_selected.png'),
                 size: 20,
                 color: Colors.grey[400],
               ),

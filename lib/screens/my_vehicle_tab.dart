@@ -276,6 +276,53 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _loadFuelRecords() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('로그인이 필요합니다');
+
+      final records = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('fuel_records')
+          .orderBy('date', descending: true)
+          .limit(5)
+          .get();
+
+      List<Map<String, dynamic>> fuelRecords = [];
+      for (var doc in records.docs) {
+        final data = doc.data();
+        final timestamp = data['date'] as Timestamp;
+        
+        // 추가 주행거리와 주유량을 사용하여 연비(km/L) 계산
+        final distance = data['distance'] is int
+          ? (data['distance'] as int).toDouble()
+          : data['distance'] as double;
+        
+        final amount = data['amount'] is int
+          ? (data['amount'] as int).toDouble()
+          : data['amount'] as double;
+        
+        final fuelEfficiency = distance > 0 && amount > 0 
+          ? distance / amount 
+          : 0.0;
+          
+        fuelRecords.add({
+          'date': timestamp.toDate().toIso8601String(),
+          'amount': data['amount'],
+          'cost': data['cost'],
+          'distance': data['distance'],
+          'pricePerLiter': data['cost'] / data['amount'],
+          'fuelEfficiency': fuelEfficiency,
+        });
+      }
+      return fuelRecords;
+    } catch (e) {
+      print('Error loading fuel records: $e');
+      return [];
+    }
+  }
+
   Widget _buildBikeInfo() {
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -308,43 +355,9 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                         '${(_userData['currentMileage'] ?? 0).toString()} km',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF1066FF),
+                          color: Colors.black,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Text(
-                        '평균 연비: ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      FutureBuilder<double>(
-                        future: _calculateAverageFuelEfficiency(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            );
-                          }
-                          return Text(
-                            '${(snapshot.data ?? 0.0).toStringAsFixed(1)} km/L',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF1066FF),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          );
-                        },
                       ),
                     ],
                   ),
@@ -384,44 +397,157 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                 : null,
           ),
         ),
-        SizedBox(height: 10),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            width: 110,
-            child: ElevatedButton(
-              onPressed: () async {
-                final result = await Navigator.pushNamed(context, '/fuel-record');
-                if (result == true) {
-                  await _loadData();
-                  setState(() {});
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFF5F3ED),
-                foregroundColor: Color(0xFF2F6DF3),
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                minimumSize: Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.local_gas_station,
-                    size: 18,
-                    color: Color(0xFF2F6DF3),
-                  ),
-                  SizedBox(width: 4),
-                  Text(
-                    '주유 기록하기',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+        SizedBox(height: 16),
+        Card(
+          color: Colors.grey[100],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '최근 주유 기록',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    FutureBuilder<double>(
+                      future: _calculateAverageFuelEfficiency(),
+                      builder: (context, snapshot) {
+                        return Text(
+                          '평균연비: ${(snapshot.data ?? 0.0).toStringAsFixed(1)} km/L',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _loadFuelRecords(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Card(
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: Text('주유 기록이 없습니다'),
+                          ),
+                        ),
+                      );
+                    }
+                    
+                    return Container(
+                      height: snapshot.data!.length > 2 ? 200 : null,
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: snapshot.data!.length > 2 
+                          ? AlwaysScrollableScrollPhysics() 
+                          : NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          final record = snapshot.data![index];
+                          final date = DateTime.parse(record['date']);
+                          final formattedDate = '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+                          
+                          return Card(
+                            margin: EdgeInsets.only(bottom: 8),
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          formattedDate,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).primaryColor,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          '₩${record['cost'].toInt()} / ${record['amount'].toStringAsFixed(1)}L',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${record['fuelEfficiency'].toStringAsFixed(1)} km/L',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    width: 150,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final result = await Navigator.pushNamed(context, '/fuel-record');
+                        if (result == true) {
+                          await _loadData();
+                          setState(() {});
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        minimumSize: Size(0, 0),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: Text(
+                        '주유 기록하기',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -526,135 +652,143 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
       periodText = subtitle;
     }
 
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 24),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => _showMaintenanceHistoryDialog(title, partType),
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Image.asset(
-                  image,
-                  width: 30,
-                  height: 30,
-                  color: const Color(0xFF1066FF),
+      color: Colors.grey[100],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () => _showMaintenanceHistoryDialog(title, partType),
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Image.asset(
+                    image,
+                    width: 30,
+                    height: 30,
+                    color: Color(0xFF4B5563),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 3),
-                    ElevatedButton(
-                      onPressed: () => _showMaintenanceResetDialog(title, partType),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF5F3ED),
-                        foregroundColor: const Color(0xFF1066FF),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        minimumSize: Size(0, 0),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      child: const Text('교체'),
-                    ),
-                    Spacer(),
-                    ElevatedButton(
-                      onPressed: () => _showPeriodUpdateDialog(partType),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF5F3ED),
-                        foregroundColor: const Color(0xFF1066FF),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        minimumSize: Size(0, 0),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      child: const Text('주기설정'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          progress > 0.9 ? Colors.red : Color(0xFF1066FF),
-                        ),
-                        minHeight: 4,
-                      ),
-                    ),
-                    if (progress > 0.9)
-                      Positioned(
-                        right: 0,
-                        top: -2,
-                        child: Icon(
-                          Icons.warning_amber_rounded,
-                          size: 16,
-                          color: Colors.red,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      periodText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    if (progress > 0.9)
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
                       Text(
-                        '교체 필요',
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      ElevatedButton(
+                        onPressed: () => _showMaintenanceResetDialog(title, partType),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF5F3ED),
+                          foregroundColor: const Color(0xFF1066FF),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          minimumSize: Size(0, 0),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        child: const Text('교체'),
+                      ),
+                      Spacer(),
+                      ElevatedButton(
+                        onPressed: () => _showPeriodUpdateDialog(partType),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF5F3ED),
+                          foregroundColor: const Color(0xFF1066FF),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          minimumSize: Size(0, 0),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        child: const Text('주기설정'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            progress > 0.9 ? Colors.red : Color(0xFF1066FF),
+                          ),
+                          minHeight: 4,
+                        ),
+                      ),
+                      if (progress > 0.9)
+                        Positioned(
+                          right: 0,
+                          top: -2,
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            size: 16,
+                            color: Colors.red,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        periodText,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.red,
-                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[600],
                         ),
                       ),
-                  ],
-                ),
-              ],
+                      if (progress > 0.9)
+                        Text(
+                          '교체 필요',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -959,6 +1093,9 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
     }
-    return _buildBikeInfo();
+    return Container(
+      color: Colors.white,
+      child: _buildBikeInfo(),
+    );
   }
 }
