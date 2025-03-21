@@ -621,32 +621,34 @@ class _ProfileScreenState extends State<ProfileScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              data['category'] ?? '카테고리 없음',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              data['title'] ?? '제목 없음',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 15,
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(
+                                data['category'] ?? '카테고리 없음',
+                                style: const TextStyle(fontSize: 12),
+                              ),
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                data['title'] ?? '제목 없음',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 15,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       SizedBox(height: 6),
                       Row(
