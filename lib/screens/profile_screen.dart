@@ -760,71 +760,67 @@ class _ProfileScreenState extends State<ProfileScreen>
                     // 내 정보 탭
                     Padding(
                       padding: EdgeInsets.all(16),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      '참여중인 채팅방',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    GestureDetector(
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => ChatListScreen()),
-                                      ),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        child: const Row(
-                                          children: [
-                                            Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                                            SizedBox(width: 2),
-                                            Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
-                                          ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '참여중인 채팅방',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Spacer(),
+                              GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => ChatListScreen()),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: const Row(
+                                    children: [
+                                      Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                      SizedBox(width: 2),
+                                      Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _buildMeetingsList(),
+                                  SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '작성글',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8),
-                                _buildMeetingsList(),
-                              ],
-                            ),
-                            SizedBox(height: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      '작성글',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                      Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        child: const Text('최근 5개', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
                                       ),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      child: const Text('최근 5개', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8),
-                                _buildPostsList(),
-                              ],
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  _buildPostsList(),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     // 내 차량 탭
