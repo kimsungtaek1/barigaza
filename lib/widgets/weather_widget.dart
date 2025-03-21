@@ -314,10 +314,10 @@ class _WeatherWidgetState extends State<WeatherWidget> {
               ),
             ),
           ),
-          // 날씨 상태 (좌측 하단)
+          // 날씨 상태 (주소 바로 아래)
           Positioned(
             left: 20,
-            bottom: 20,
+            top: 60,
             child: Text(
               _weatherInfo == null
                   ? '날씨 정보를 불러오는 중...'
@@ -328,13 +328,24 @@ class _WeatherWidgetState extends State<WeatherWidget> {
               ),
             ),
           ),
-          // 최고/최저 온도 (우측 하단)
+          // 최고 온도 (좌측 하단)
+          Positioned(
+            left: 20,
+            bottom: 20,
+            child: Text(
+              '최고:${_weatherInfo?['TMX']?.isNotEmpty == true ? '${_weatherInfo!['TMX']}°C' : '-'}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          // 최저 온도 (우측 하단)
           Positioned(
             right: 20,
             bottom: 20,
             child: Text(
-              '최고:${_weatherInfo?['TMX']?.isNotEmpty == true ? '${_weatherInfo!['TMX']}°C' : '-'}  '
-                  '최저:${_weatherInfo?['TMN']?.isNotEmpty == true ? '${_weatherInfo!['TMN']}°C' : '-'}',
+              '최저:${_weatherInfo?['TMN']?.isNotEmpty == true ? '${_weatherInfo!['TMN']}°C' : '-'}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,

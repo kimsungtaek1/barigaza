@@ -4,6 +4,7 @@ import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'package:http/http.dart' as http;
 import '../widgets/ad_banner_widget.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
@@ -91,11 +92,16 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
     if (_disposed) return;
 
     try {
-      final String jsonString = await DefaultAssetBundle.of(context)
-          .loadString('assets/jsons/regions.json');
+      final response = await http.get(Uri.parse('https://barigaza-796a1.web.app/regions.json'));
+      if (response.statusCode != 200) {
+        debugPrint('Error fetching regions from server: ${response.statusCode}');
+        return;
+      }
+      
       if (!_disposed && mounted) {
         setState(() {
-          _regionsData = json.decode(jsonString);
+          // UTF-8 디코딩을 명시적으로 처리
+          _regionsData = json.decode(utf8.decode(response.bodyBytes));
         });
       }
     } catch (e) {

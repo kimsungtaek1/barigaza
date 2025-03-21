@@ -85,7 +85,15 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         setState(() {
-          _currentAddress = '${place.administrativeArea ?? ''} ${place.locality ?? ''}';
+          final adminArea = place.administrativeArea ?? '';
+          final locality = place.locality ?? '';
+          
+          // 중복 방지: adminArea와 locality가 같으면 하나만 표시
+          if (adminArea.isNotEmpty && locality.isNotEmpty && adminArea == locality) {
+            _currentAddress = adminArea;
+          } else {
+            _currentAddress = '${adminArea.isNotEmpty ? adminArea : ''} ${locality.isNotEmpty ? locality : ''}';
+          }
         });
       }
     } catch (e) {
@@ -190,7 +198,15 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       width: 150,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: Colors.grey[200],
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,6 +256,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
@@ -296,11 +313,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '날씨',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
                       Container(
                         height: 150,
                         decoration: BoxDecoration(
@@ -337,8 +349,13 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   // 8. 이벤트 섹션
   Widget _buildEventSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -348,7 +365,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 '이벤트 · 광고',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: 8),
+              const Spacer(),
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -356,24 +373,20 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
                   child: const Row(
                     children: [
-                      Text('더보기', style: TextStyle(fontSize: 10, color: Colors.white)),
+                      Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
                       SizedBox(width: 2),
-                      Icon(Icons.keyboard_arrow_right, size: 14, color: Colors.white),
+                      Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 200,
+            height: 300,
             child: _events.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : Stack(
@@ -392,15 +405,15 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         ),
                       ),
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 3,
-                              offset: const Offset(0, 2),
+                              color: Colors.black.withOpacity(0.15),
+                              spreadRadius: 2,
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
@@ -409,6 +422,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                           child: CachedNetworkImage(
                             imageUrl: event.imageUrl,
                             fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: 240,
                             placeholder: (context, url) =>
                             const Center(child: CircularProgressIndicator()),
                             errorWidget: (context, url, error) =>
@@ -421,8 +436,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 if (_events.length > 1)
                   Positioned(
-                    bottom: 12,
-                    right: 12,
+                    bottom: 26,
+                    right: 20,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
@@ -449,7 +464,12 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   // 9. 카페 추천 섹션
   Widget _buildLocationSection() {
-    return Padding(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,7 +480,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 '바이크 카페 추천',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: 8),
+              const Spacer(),
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -468,15 +488,11 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
                   child: const Row(
                     children: [
-                      Text('더보기', style: TextStyle(fontSize: 10, color: Colors.white)),
+                      Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
                       SizedBox(width: 2),
-                      Icon(Icons.keyboard_arrow_right, size: 14, color: Colors.white),
+                      Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
                     ],
                   ),
                 ),

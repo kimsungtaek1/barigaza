@@ -48,7 +48,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
         children: [
           _buildCategoryMenu(),
           if (_selectedCategory == '탐색') _buildSearchBar(),
-          _buildSortOptions(),
           Expanded(
             child: StreamBuilder<List<Post>>(
               stream: _postService.getPostsStream(
@@ -72,36 +71,66 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         heroTag: 'community_add_button',
         onPressed: _navigateToWriteScreen,
         backgroundColor: Color(0xFF2F6DF3),
-        icon: Icon(
+        child: Icon(
           Icons.add,
           color: Colors.white,
-          size: 18, // 아이콘 크기 증가
-        ),
-        label: Text(
-          '추가',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-          ),
         ),
       ),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
+    // _selectedCategory에 따라 정렬 옵션을 다르게 구성
+    List<String> sortOptions;
+    if (_selectedCategory == '탐색') {
+      sortOptions = ['추천순', '조회순', '신규'];
+    } else {
+      sortOptions = ['신규'];
+    }
+
     return AppBar(
-      title: Text(
-        '커뮤니티',
-        style: TextStyle(
-          color: Colors.black87,
-          fontWeight: FontWeight.bold,
-        ),
+      title: Row(
+        children: [
+          DropdownButton<String>(
+            value: _selectedSort,
+            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]), // V 모양 아이콘으로 변경
+            underline: Container(
+              height: 2,
+              color: Colors.brown[200],
+            ),
+            items: sortOptions.map((String option) {
+              return DropdownMenuItem<String>(
+                value: option,
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() => _selectedSort = newValue);
+              }
+            },
+          ),
+          SizedBox(width: 16),
+          Text(
+            '커뮤니티',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF3F4F6),
       elevation: 0,
       actions: [
         IconButton(

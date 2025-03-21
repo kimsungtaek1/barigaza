@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // rootBundle 사용
+import 'package:http/http.dart' as http;
 
 class PrivacyAgreementScreen extends StatefulWidget {
   @override
@@ -29,19 +30,29 @@ class _PrivacyAgreementScreenState extends State<PrivacyAgreementScreen> {
   }
 
   void _showTermsModal(String title) async {
-    // title 값에 따라 로드할 JSON 파일 결정
-    String filePath;
+    // title 값에 따라 로드할 JSON 파일 URL 결정
+    String fileUrl;
     if (title == '개인정보처리방침') {
-      filePath = 'assets/jsons/privacy_agreement.json';
+      fileUrl = 'https://barigaza-796a1.web.app/privacy_agreement.json';
     } else if(title == '이용약관'){
       // 기본값
-      filePath = 'assets/jsons/terms.json';
+      fileUrl = 'https://barigaza-796a1.web.app/terms.json';
     } else{
-      filePath = 'assets/jsons/privacy_agreement.json';
+      fileUrl = 'https://barigaza-796a1.web.app/privacy_agreement.json';
     }
 
-    String jsonString = await rootBundle.loadString(filePath);
-    Map<String, dynamic> policyData = jsonDecode(jsonString);
+    // HTTP 요청으로 JSON 파일 가져오기
+    final response = await http.get(Uri.parse(fileUrl));
+    if (response.statusCode != 200) {
+      debugPrint('Error fetching JSON from server: ${response.statusCode}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('약관 정보를 불러오는데 실패했습니다')),
+      );
+      return;
+    }
+    
+    // UTF-8 디코딩을 명시적으로 처리
+    Map<String, dynamic> policyData = jsonDecode(utf8.decode(response.bodyBytes));
 
     showModalBottomSheet(
       context: context,

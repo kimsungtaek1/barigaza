@@ -71,11 +71,16 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
   Future<void> _loadRegionsFromAssets() async {
     if (_disposed) return;
     try {
-      final String jsonString = await DefaultAssetBundle.of(context)
-          .loadString('assets/jsons/regions.json');
+      final response = await http.get(Uri.parse('https://barigaza-796a1.web.app/regions.json'));
+      if (response.statusCode != 200) {
+        debugPrint('Error fetching regions from server: ${response.statusCode}');
+        return;
+      }
+      
       if (!_disposed) {
         setState(() {
-          _regionsData = json.decode(jsonString);
+          // UTF-8 디코딩을 명시적으로 처리
+          _regionsData = json.decode(utf8.decode(response.bodyBytes));
         });
       }
     } catch (e) {
@@ -316,21 +321,13 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
             const SizedBox(width: 12),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
+        floatingActionButton: FloatingActionButton(
           heroTag: 'flash_add_button',
           onPressed: _showAddMeetingDialog,
           backgroundColor: Color(0xFF2F6DF3),
-          icon: Icon(
+          child: Icon(
             Icons.add,
             color: Colors.white,
-            size: 18,
-          ),
-          label: Text(
-            '추가',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
           ),
         ),
         body: Column(
