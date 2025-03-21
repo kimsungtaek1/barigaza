@@ -145,7 +145,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
               meeting.location.latitude,
               meeting.location.longitude,
             ),
-            size: const NSize(50.0, 50.0),
+            size: const NSize(48.0, 59.0),
             icon: NOverlayImage.fromAssetImage('assets/images/marker.png')
           );
 

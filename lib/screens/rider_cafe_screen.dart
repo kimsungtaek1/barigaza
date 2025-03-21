@@ -163,7 +163,7 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
             final marker = NMarker(
               id: doc.id,
               position: NLatLng(location.latitude, location.longitude),
-              size: const NSize(50.0, 50.0),
+              size: const NSize(48.0, 59.0),
               icon: NOverlayImage.fromAssetImage('assets/images/marker.png')
             );
 
