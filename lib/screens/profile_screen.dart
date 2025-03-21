@@ -828,9 +828,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               ],
             ),
           ),
-            ],
-          ),
-        ),
+        ],
       ),
       bottomNavigationBar: widget.showBottomNav ? Column(
         mainAxisSize: MainAxisSize.min,
