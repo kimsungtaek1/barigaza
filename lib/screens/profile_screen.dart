@@ -505,6 +505,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             
             return Card(
               margin: EdgeInsets.only(bottom: 16),
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: () {
@@ -604,6 +608,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             
             return Card(
               margin: EdgeInsets.only(bottom: 16),
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: () {
@@ -795,7 +803,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                             physics: AlwaysScrollableScrollPhysics(),
                             child: Column(
                               children: [
-                                _buildMeetingsList(),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4),
+                                  child: _buildMeetingsList(),
+                                ),
                                 SizedBox(height: 16),
                                 Row(
                                   children: [
@@ -814,7 +825,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ],
                                 ),
                                 SizedBox(height: 8),
-                                _buildPostsList(),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4),
+                                  child: _buildPostsList(),
+                                ),
                               ],
                             ),
                           ),
