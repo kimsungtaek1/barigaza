@@ -661,7 +661,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GestureDetector(
               onTap: () => _showMaintenanceHistoryDialog(title, partType),
@@ -671,6 +671,14 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 1,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Image.asset(
@@ -686,103 +694,118 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      ElevatedButton(
-                        onPressed: () => _showMaintenanceResetDialog(title, partType),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF5F3ED),
-                          foregroundColor: const Color(0xFF1066FF),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          minimumSize: Size(0, 0),
-                          textStyle: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        child: const Text('교체'),
-                      ),
-                      Spacer(),
-                      ElevatedButton(
-                        onPressed: () => _showPeriodUpdateDialog(partType),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF5F3ED),
-                          foregroundColor: const Color(0xFF1066FF),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          minimumSize: Size(0, 0),
-                          textStyle: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        child: const Text('주기설정'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          backgroundColor: Colors.grey[300],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            progress > 0.9 ? Colors.red : Color(0xFF1066FF),
-                          ),
-                          minHeight: 4,
-                        ),
-                      ),
-                      if (progress > 0.9)
-                        Positioned(
-                          right: 0,
-                          top: -2,
-                          child: Icon(
-                            Icons.warning_amber_rounded,
-                            size: 16,
-                            color: Colors.red,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        periodText,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      if (progress > 0.9)
+                  IntrinsicHeight(
+                    child: Row(
+                      children: [
                         Text(
-                          '교체 필요',
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        ElevatedButton(
+                          onPressed: () => _showMaintenanceResetDialog(title, partType),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF5F3ED),
+                            foregroundColor: const Color(0xFF1066FF),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 0,
+                            ),
+                            minimumSize: Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            textStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          child: const Text('교체'),
+                        ),
+                        Spacer(),
+                      ],
+                    ),
+                  ),
+                  IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: LinearProgressIndicator(
+                                  value: progress,
+                                  backgroundColor: Colors.grey[300],
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    progress > 0.9 ? Colors.red : Color(0xFF1066FF),
+                                  ),
+                                  minHeight: 6,
+                                ),
+                              ),
+                              if (progress > 0.9)
+                                Positioned(
+                                  right: 0,
+                                  top: -2,
+                                  child: Icon(
+                                    Icons.warning_amber_rounded,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => _showPeriodUpdateDialog(partType),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF5F3ED),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 0,
+                            ),
+                            minimumSize: Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            textStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          child: const Text('주기설정'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IntrinsicHeight(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          periodText,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
                           ),
                         ),
-                    ],
+                        if (progress > 0.9)
+                          Text(
+                            '교체 필요',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
