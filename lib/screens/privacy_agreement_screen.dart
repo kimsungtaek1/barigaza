@@ -111,7 +111,7 @@ class _PrivacyAgreementScreenState extends State<PrivacyAgreementScreen> {
         ),
         value: value,
         onChanged: onChanged,
-        activeColor: Color(0xFF756C54),
+        activeColor: Color(0xFF1066FF),
         checkColor: Colors.white,
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: EdgeInsets.symmetric(horizontal: 12),
@@ -193,7 +193,7 @@ class _PrivacyAgreementScreenState extends State<PrivacyAgreementScreen> {
                       ? () => Navigator.pushNamed(context, '/signup')
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF756C54),
+                    backgroundColor: Color(0xFF1066FF),
                     padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -382,7 +382,7 @@ class PrivacyPolicyContent extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF756C54),
+              backgroundColor: Color(0xFF1066FF),
               padding: EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

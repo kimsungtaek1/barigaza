@@ -443,7 +443,7 @@ class _CafeRegistrationScreenState extends State<CafeRegistrationScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveCafe,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF756C54),
+                    backgroundColor: const Color(0xFF1066FF),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

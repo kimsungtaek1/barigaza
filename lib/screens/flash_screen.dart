@@ -147,6 +147,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
             ),
             size: const NSize(50.0, 50.0),
             icon: NOverlayImage.fromAssetImage('assets/images/marker.png'),
+            iconTintColor: const Color(0xFF1066FF), // primary color로 설정
           );
 
           final String formattedText = _formatMeetingInfo(meeting);

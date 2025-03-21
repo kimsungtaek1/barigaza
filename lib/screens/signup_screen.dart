@@ -131,7 +131,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     _selectedGender = value;
                   });
                 },
-                activeColor: Color(0xFF756C54),
+                activeColor: Color(0xFF1066FF),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -145,7 +145,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     _selectedGender = value;
                   });
                 },
-                activeColor: Color(0xFF756C54),
+                activeColor: Color(0xFF1066FF),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -198,7 +198,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ? _sendVerificationCode
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF756C54),
+                  backgroundColor: Color(0xFF1066FF),
                   padding: EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -236,7 +236,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: ElevatedButton(
                   onPressed: !_isPhoneVerified ? _verifyPhone : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF756C54),
+                    backgroundColor: Color(0xFF1066FF),
                     padding: EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -339,7 +339,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ? _handleSignUp
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF756C54),
+                        backgroundColor: Color(0xFF1066FF),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),

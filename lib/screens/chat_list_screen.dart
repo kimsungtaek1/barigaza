@@ -194,7 +194,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                 ],
                 labelColor: Colors.black,
                 unselectedLabelColor: Colors.grey,
-                indicatorColor: Color(0xFF756C54),
+                indicatorColor: Color(0xFF1066FF),
               ),
             ],
           ),

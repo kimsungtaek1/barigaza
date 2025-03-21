@@ -87,7 +87,7 @@ class _AdminEventTabState extends State<AdminEventTab> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToEventModify(),
-        backgroundColor: Color(0xFF756C54),
+        backgroundColor: Color(0xFF1066FF),
         child: const Icon(Icons.add),
         tooltip: '새 이벤트 등록',
       ),
@@ -179,7 +179,7 @@ class _AdminEventTabState extends State<AdminEventTab> {
                       Switch(
                         value: event.isActive,
                         onChanged: (value) => _toggleEventStatus(event.id, value),
-                        activeColor: Color(0xFF756C54),
+                        activeColor: Color(0xFF1066FF),
                       ),
                     ],
                   ),

@@ -298,7 +298,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                   Row(
                     children: [
                       Text(
-                        '현재 주행거리: ',
+                        '누적 주행거리: ',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -308,7 +308,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                         '${(_userData['currentMileage'] ?? 0).toString()} km',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF756C54),
+                          color: Color(0xFF1066FF),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -340,7 +340,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                             '${(snapshot.data ?? 0.0).toStringAsFixed(1)} km/L',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Color(0xFF756C54),
+                              color: Color(0xFF1066FF),
                               fontWeight: FontWeight.bold,
                             ),
                           );
@@ -544,7 +544,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                   image,
                   width: 30,
                   height: 30,
-                  color: const Color(0xFF756C54),
+                  color: const Color(0xFF1066FF),
                 ),
               ),
             ),
@@ -568,7 +568,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                       onPressed: () => _showMaintenanceResetDialog(title, partType),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFF5F3ED),
-                        foregroundColor: const Color(0xFF756C54),
+                        foregroundColor: const Color(0xFF1066FF),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -587,7 +587,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                       onPressed: () => _showPeriodUpdateDialog(partType),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFF5F3ED),
-                        foregroundColor: const Color(0xFF756C54),
+                        foregroundColor: const Color(0xFF1066FF),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -612,7 +612,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                         value: progress,
                         backgroundColor: Colors.grey[200],
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          progress > 0.9 ? Colors.red : Color(0xFF756C54),
+                          progress > 0.9 ? Colors.red : Color(0xFF1066FF),
                         ),
                         minHeight: 4,
                       ),
@@ -724,7 +724,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('$title 교체가 완료되었습니다'),
-                      backgroundColor: Color(0xFF756C54),
+                      backgroundColor: Color(0xFF1066FF),
                     ),
                   );
                 }
@@ -741,7 +741,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF756C54),
+              backgroundColor: Color(0xFF1066FF),
               foregroundColor: Colors.white,
             ),
             child: Text('확인'),
@@ -789,7 +789,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                 return ListTile(
                   leading: Icon(
                     Icons.build,
-                    color: Color(0xFF756C54),
+                    color: Color(0xFF1066FF),
                   ),
                   title: Text(
                     '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',

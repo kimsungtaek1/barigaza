@@ -320,7 +320,7 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF756C54),
+                      backgroundColor: Color(0xFF1066FF),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

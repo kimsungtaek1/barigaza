@@ -120,7 +120,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                         ),
                         trailing: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF756C54),
+                            backgroundColor: const Color(0xFF1066FF),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -189,7 +189,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
             child: const Text(
               '확인',
               style: TextStyle(
-                color: Color(0xFF756C54),
+                color: Color(0xFF1066FF),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),

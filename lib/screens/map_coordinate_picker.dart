@@ -73,7 +73,7 @@ class _MapCoordinatePickerState extends State<MapCoordinatePicker> {
           Center(
             child: Icon(
               Icons.location_on,
-              color: Colors.red,
+              color: const Color(0xFF1066FF), // primary color로 변경
               size: 36,
             ),
           ),

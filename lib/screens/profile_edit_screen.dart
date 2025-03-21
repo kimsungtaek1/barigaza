@@ -640,7 +640,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF756C54),
+                      backgroundColor: Color(0xFF1066FF),
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -706,7 +706,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               height: 54, // TextFormField의 기본 높이와 동일하게 설정
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF756C54),
+                  backgroundColor: Color(0xFF1066FF),
                   padding: EdgeInsets.symmetric(vertical: 14), // TextFormField의 contentPadding과 동일
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8), // TextFormField와 동일한 borderRadius
@@ -748,7 +748,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   onPressed: !_isPhoneVerified ? _verifyPhone : null,
                   child: Text('확인'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF756C54),
+                    backgroundColor: Color(0xFF1066FF),
                   ),
                 ),
               ),
