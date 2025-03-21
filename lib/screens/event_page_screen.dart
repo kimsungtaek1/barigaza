@@ -15,9 +15,23 @@ class _EventsListScreenState extends State<EventsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('이벤트'),
+        title: Text(
+          '이벤트',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Container(
+            color: Colors.grey[200],
+            height: 1.0,
+          ),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         // 활성화된 이벤트만 가져오기
@@ -145,9 +159,23 @@ class EventDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('이벤트 상세'),
+        title: Text(
+          '이벤트 상세',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Container(
+            color: Colors.grey[200],
+            height: 1.0,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(

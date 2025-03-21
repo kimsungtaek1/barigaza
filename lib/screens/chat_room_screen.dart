@@ -179,7 +179,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.otherUserNickname),
+              Text(
+                widget.otherUserNickname,
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _chatService.getParticipants(widget.chatId),
                 builder: (context, snapshot) {
@@ -191,6 +197,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 },
               ),
             ],
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Container(
+            color: Colors.grey[200],
+            height: 1.0,
           ),
         ),
         actions: [

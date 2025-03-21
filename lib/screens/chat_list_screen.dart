@@ -168,13 +168,36 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('채팅'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: '채팅'),
-            Tab(text: '사용자'),
-          ],
+        title: Text(
+          '채팅',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(49.0), // TabBar height (48) + divider (1)
+          child: Column(
+            children: [
+              Container(
+                height: 1.0,
+                color: Colors.grey[200],
+              ),
+              TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(text: '채팅'),
+                  Tab(text: '사용자'),
+                ],
+                labelColor: Colors.black,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Color(0xFF756C54),
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(

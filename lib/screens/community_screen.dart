@@ -43,6 +43,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -75,6 +76,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         heroTag: 'community_add_button',
         onPressed: _navigateToWriteScreen,
         backgroundColor: Color(0xFF2F6DF3),
+        shape: CircleBorder(),
         child: Icon(
           Icons.add,
           color: Colors.white,
@@ -84,53 +86,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    // _selectedCategory에 따라 정렬 옵션을 다르게 구성
-    List<String> sortOptions;
-    if (_selectedCategory == '탐색') {
-      sortOptions = ['추천순', '조회순', '신규'];
-    } else {
-      sortOptions = ['신규'];
-    }
-
     return AppBar(
-      title: Row(
-        children: [
-          DropdownButton<String>(
-            value: _selectedSort,
-            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]), // V 모양 아이콘으로 변경
-            underline: Container(
-              height: 2,
-              color: Colors.brown[200],
-            ),
-            items: sortOptions.map((String option) {
-              return DropdownMenuItem<String>(
-                value: option,
-                child: Text(
-                  option,
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                setState(() => _selectedSort = newValue);
-              }
-            },
-          ),
-          SizedBox(width: 16),
-          Text(
-            '커뮤니티',
-            style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+      title: Text(
+        '커뮤니티',
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.bold,
+        ),
       ),
-      backgroundColor: const Color(0xFFF3F4F6),
+      centerTitle: false,
+      backgroundColor: Colors.white,
       elevation: 0,
       actions: [
         IconButton(
@@ -141,60 +106,126 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ),
       ],
+      bottom: PreferredSize(
+        preferredSize: Size.fromHeight(1.0),
+        child: Container(
+          color: Colors.grey[200],
+          height: 1.0,
+        ),
+      ),
     );
   }
 
   Widget _buildCategoryMenu() {
+    // _selectedCategory에 따라 정렬 옵션을 다르게 구성
+    List<String> sortOptions;
+    if (_selectedCategory == '탐색') {
+      sortOptions = ['추천순', '조회순', '신규'];
+    } else {
+      sortOptions = ['신규'];
+    }
+
     return Container(
-      height: 50,
+      height: 60, // 전체 높이 증가
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border(
           bottom: BorderSide(
             color: Colors.grey[200]!,
             width: 1,
           ),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 2,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
-          final category = _categories[index];
-          final isSelected = _selectedCategory == category;
-
-          return GestureDetector(
-            onTap: () => setState(() {
-              _selectedCategory = category;
-              _searchQuery = '';
-              _searchController.clear();
-              // 카테고리 변경 시 정렬 옵션도 업데이트 (탐색은 3개, 나머지는 신규만)
-              if (_selectedCategory == '탐색') {
-                _selectedSort = '추천순'; // 탐색 카테고리 기본값
-              } else {
-                _selectedSort = '신규';
-              }
-            }),
+      child: Row(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 16),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: isSelected ? Colors.black : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                category,
-                style: TextStyle(
-                  color: isSelected ? Colors.black : Colors.grey,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
+              width: 78, // 1.3배 정도 더 넓게 설정 (대략 60*1.3)
+              child: DropdownButton<String>(
+                value: _selectedSort,
+                isExpanded: true, // 컨테이너 너비에 맞추기
+                icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]), // V 모양 아이콘
+                underline: SizedBox(), // 밑줄 제거
+                items: sortOptions.map((String option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        color: Colors.grey, // 카테고리 텍스트와 동일한 스타일
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() => _selectedSort = newValue);
+                  }
+                },
               ),
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final isSelected = _selectedCategory == category;
+
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    _selectedCategory = category;
+                    _searchQuery = '';
+                    _searchController.clear();
+                    // 카테고리 변경 시 정렬 옵션도 업데이트 (탐색은 3개, 나머지는 신규만)
+                    if (_selectedCategory == '탐색') {
+                      _selectedSort = '추천순'; // 탐색 카테고리 기본값
+                    } else {
+                      _selectedSort = '신규';
+                    }
+                  }),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 8), // 상단 여백 늘림
+                        Text(
+                          category,
+                          style: TextStyle(
+                            color: isSelected ? Color(0xFF2F6DF3) : Colors.grey, // primary color로 변경
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                        SizedBox(height: 3), // 텍스트와 밑줄 사이 간격
+                        FittedBox(
+                          fit: BoxFit.none,
+                          child: Container(
+                            width: category.length * 12.0, // 글자 수에 비례해 너비 설정
+                            height: 2, // 3픽셀 유지
+                            color: isSelected ? Color(0xFF2F6DF3) : Colors.transparent, // primary color
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

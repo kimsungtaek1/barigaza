@@ -325,6 +325,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
           heroTag: 'flash_add_button',
           onPressed: _showAddMeetingDialog,
           backgroundColor: Color(0xFF2F6DF3),
+          shape: CircleBorder(),
           child: Icon(
             Icons.add,
             color: Colors.white,

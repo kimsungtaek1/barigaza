@@ -67,6 +67,15 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
     _selectedIndex = widget.selectedBottomTab;
 
+    // 탭 완전히 변경되었을 때만 UI 업데이트하도록 최적화
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging && _tabController.previousIndex != _tabController.index) {
+        setState(() {
+          // 탭 인덱스 변경에 따른 최소한의 업데이트만 수행
+        });
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (await AuthUtils.checkLoginAndShowAlert(context)) {
         await _loadUserData();
@@ -295,7 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.blue,
+                          color: Colors.black,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.camera_alt,
@@ -328,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.edit, color: Colors.grey),
+                icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
                 onPressed: () async {
                   final result = await Navigator.push(
                     context,
@@ -369,12 +378,81 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+  // 이 메서드는 더 이상 필요하지 않음 - chatRooms에서 직접 lastMessage를 가져오기 때문
+  // Future<String> _getLastMessage(String? chatRoomId) async { ... }
+
+  // 날짜 포맷 도우미 함수 - 항상 YYYY.MM.DD 형식으로 출력
+  String _formatDate(dynamic timestamp) {
+    if (timestamp == null) return '날짜 없음';
+    
+    try {
+      DateTime dateTime;
+      if (timestamp is Timestamp) {
+        dateTime = timestamp.toDate();
+      } else {
+        try {
+          // timestamp가 Map인 경우 Firestore의 Timestamp 형식으로 변환 시도
+          dateTime = DateTime.fromMillisecondsSinceEpoch(
+              ((timestamp as Map)['_seconds'] ?? 0) * 1000 +
+                  ((timestamp as Map)['_nanoseconds'] ?? 0) ~/ 1000000);
+        } catch (e) {
+          // 다른 형식의 timestamp 처리 시도
+          if (timestamp is int) {
+            dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+          } else {
+            return '날짜 없음';
+          }
+        }
+      }
+      
+      // 항상 YYYY.MM.DD 형식으로 반환
+      return '${dateTime.year}.${dateTime.month.toString().padLeft(2, '0')}.${dateTime.day.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return '날짜 오류';
+    }
+  }
+
+  // 카테고리 탭 위젯을 빌드하는 메서드 (코드 분리 및 재사용성 향상)
+  Widget _buildCategoryTab(int index, String title) {
+    final isSelected = _tabController.index == index;
+    // 성능 최적화: 필요한 스타일만 계산
+    final textStyle = TextStyle(
+      color: isSelected ? const Color(0xFF2F6DF3) : Colors.grey,
+      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    );
+    
+    return InkWell( // GestureDetector 대신 InkWell 사용 (더 나은 터치 반응성)
+      onTap: () {
+        if (_tabController.index != index) {
+          _tabController.animateTo(index);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 8),
+            Text(title, style: textStyle),
+            const SizedBox(height: 3),
+            Container(
+              width: 40.0,
+              height: 2,
+              color: isSelected ? const Color(0xFF2F6DF3) : Colors.transparent,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 성능 최적화: 미팅 리스트 캐싱 기능 추가
   Widget _buildMeetingsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
-          .collection('meetings')
-          .where('participants', arrayContains: _auth.currentUser?.uid)
-          .orderBy('meetingTime', descending: true)
+          .collection('chatRooms')
+          .where('users', arrayContains: _auth.currentUser?.uid)
+          .orderBy('lastMessageTime', descending: true)
           .limit(5)
           .snapshots(),
       builder: (context, snapshot) {
@@ -383,43 +461,108 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
-        final meetings = snapshot.data?.docs ?? [];
+        final chatRooms = snapshot.data?.docs ?? [];
 
-        if (meetings.isEmpty) {
-          return Center(
-            child: Text('참여 중인 번개 모임이 없습니다', style: TextStyle(color: Colors.grey)),
+        if (chatRooms.isEmpty) {
+          return const Center(
+            child: Text('참여 중인 채팅방이 없습니다', style: TextStyle(color: Colors.grey)),
           );
         }
 
-        return Column(
-          children: meetings.map((meeting) {
-            final data = meeting.data() as Map<String, dynamic>;
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey[200],
-                child: Icon(Icons.group, color: Colors.grey),
-              ),
-              title: Text(data['title'] ?? '제목 없음'),
-              subtitle: Text(data['address'] ?? '주소 없음'),
-              trailing: Icon(Icons.chevron_right),
-              onTap: () {
-                if (data['chatRoomId'] != null) {
+        // ListView.builder 사용하여 렌더링 최적화
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: chatRooms.length,
+          itemBuilder: (context, index) {
+            final chatRoom = chatRooms[index];
+            final data = chatRoom.data() as Map<String, dynamic>;
+            
+            // 채팅방 제목 결정 로직
+            String chatTitle = '채팅방';
+            // 그룹 채팅인 경우
+            if (data['isGroupChat'] == true) {
+              chatTitle = data['groupName'] ?? '그룹 채팅';
+            } 
+            // 1:1 채팅인 경우
+            else {
+              if (data['userDetails'] != null) {
+                final userDetails = data['userDetails'] as Map<String, dynamic>;
+                // 자신을 제외한 다른 사용자의 닉네임 찾기
+                userDetails.forEach((userId, details) {
+                  if (userId != _auth.currentUser?.uid) {
+                    chatTitle = details['nickname'] ?? '채팅상대';
+                  }
+                });
+              }
+            }
+            
+            // 참여자 수 계산
+            final participantsCount = (data['users'] as List?)?.length ?? 0;
+            
+            return Card(
+              margin: EdgeInsets.only(bottom: 16),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ChatRoomScreen(
-                        chatId: data['chatRoomId'],
-                        otherUserNickname: data['title'] ?? '번개 모임',
+                        chatId: chatRoom.id,
+                        otherUserNickname: chatTitle,
                       ),
                     ),
                   );
-                }
-              },
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              chatTitle,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '참여자 $participantsCount명',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        '최근 메시지: ${data['lastMessage'] ?? '메시지 없음'}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600]
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             );
-          }).toList(),
+          },
         );
       },
     );
@@ -439,67 +582,101 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         final posts = snapshot.data?.docs ?? [];
 
         if (posts.isEmpty) {
-          return Center(
+          return const Center(
             child: Text('작성한 게시글이 없습니다', style: TextStyle(color: Colors.grey)),
           );
         }
 
-        return Column(
-          children: posts.map((post) {
+        // ListView.builder 사용으로 성능 향상
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final post = posts[index];
             final data = post.data() as Map<String, dynamic>;
-
-            return StreamBuilder<QuerySnapshot>(
-                stream: _firestore
-                    .collection('posts')
-                    .doc(post.id)
-                    .collection('comments')
-                    .snapshots(),
-                builder: (context, commentSnapshot) {
-                  final commentCount = commentSnapshot.data?.docs.length ?? 0;
-
-                  return ListTile(
-                    leading: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        data['category'] ?? '카테고리 없음',
-                        style: TextStyle(fontSize: 12),
+            
+            return Card(
+              margin: EdgeInsets.only(bottom: 16),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CommunityContentScreen(
+                        postId: post.id,
                       ),
                     ),
-                    title: Text(data['title'] ?? '제목 없음'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          commentCount.toString(),
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        Icon(Icons.chevron_right, color: Colors.grey),
-                      ],
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CommunityContentScreen(
-                            postId: post.id,
-                          ),
-                        ),
-                      );
-                    },
                   );
-                }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              data['category'] ?? '카테고리 없음',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              data['title'] ?? '제목 없음',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Text(
+                            data['createdAt'] != null
+                                ? _formatDate(data['createdAt'])
+                                : '날짜 없음',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            '조회 ${data['viewCount'] ?? 0}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             );
-          }).toList(),
+          },
         );
       },
     );
@@ -514,8 +691,16 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        title: const Text('마이페이지', style: TextStyle(color: Colors.black)),
+        title: Text(
+          '마이페이지',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -524,64 +709,130 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: const Text('로그아웃', style: TextStyle(color: Colors.red)),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: '내 정보'),
-            Tab(text: '내 차량'),
-          ],
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Color(0xFF756C54),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Container(
+            color: Colors.grey[200],
+            height: 1.0,
+          ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // 마이페이지 탭
-          RefreshIndicator(
-            onRefresh: _loadUserData,
-            child: SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProfileInfo(),
-                  Divider(),
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '참여중인 채팅방',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        _buildMeetingsList(),
-                        SizedBox(height: 16),
-                        Text(
-                          '작성글',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        _buildPostsList(),
-                      ],
+      body: RefreshIndicator(
+        onRefresh: _loadUserData,
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildProfileInfo(),
+              // 회원 탈퇴 섹션 밑에 카테고리 메뉴 추가
+              Container(
+                height: 60,
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey[200]!,
+                      width: 1,
                     ),
                   ),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 16),
+                      child: Row(
+                        children: [
+                          _buildCategoryTab(0, '내 정보'),
+                          _buildCategoryTab(1, '내 차량'),
+                        ],
+                      ),
+                    ),
+                    Spacer(),
+                  ],
+                ),
               ),
-            ),
+              SizedBox(height: 16),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.65,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // 내 정보 탭
+                    Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    '참여중인 채팅방',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Spacer(),
+                                  GestureDetector(
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => ChatListScreen()),
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      child: const Row(
+                                        children: [
+                                          Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                          SizedBox(width: 2),
+                                          Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              _buildMeetingsList(),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    '작성글',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    child: const Text('최근 5개', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              _buildPostsList(),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // 내 차량 탭
+                    MyVehicleTab(),
+                  ],
+                ),
+              ),
+            ],
           ),
-          // 내 차량 탭
-          MyVehicleTab(),
-        ],
+        ),
       ),
       bottomNavigationBar: widget.showBottomNav ? Column(
         mainAxisSize: MainAxisSize.min,

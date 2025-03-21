@@ -115,8 +115,7 @@ class _PostCardState extends State<PostCard> {
           .get(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          // 에러가 발생한 경우 콘솔에 출력하고 에러 아이콘 표시
-          print("Error loading user document for userId ${widget.post.userId}: ${snapshot.error}");
+          // 에러가 발생한 경우 - 로그 출력 없이 에러 아이콘 표시
           return CircleAvatar(
             radius: 12,
             backgroundColor: Colors.grey[200],
@@ -144,7 +143,7 @@ class _PostCardState extends State<PostCard> {
           // 사용자 문서가 존재할 경우 데이터를 확인
           final userData = snapshot.data!.data() as Map<String, dynamic>?;
           if (userData == null) {
-            print("User document for userId ${widget.post.userId} contains no data.");
+            // 사용자 문서에 데이터가 없는 경우 - 로그 출력 없이 기본 아이콘 표시
             return CircleAvatar(
               radius: 12,
               backgroundColor: Colors.grey[200],
@@ -154,7 +153,7 @@ class _PostCardState extends State<PostCard> {
 
           final profileImage = userData['profileImage'] as String?;
           if (profileImage == null || profileImage.isEmpty) {
-            print("No profileImage found for userId ${widget.post.userId} in user document.");
+            // 프로필 이미지가 없는 경우 - 로그 출력 없이 기본 아이콘 표시
             return CircleAvatar(
               radius: 12,
               backgroundColor: Colors.grey[200],
@@ -169,8 +168,7 @@ class _PostCardState extends State<PostCard> {
             backgroundImage: CachedNetworkImageProvider(profileImage),
           );
         } else {
-          // 사용자 문서가 없을 경우
-          print("User document does not exist for userId: ${widget.post.userId}");
+          // 사용자 문서가 없을 경우 - 로그 출력 없이 기본 아이콘 표시
           return CircleAvatar(
             radius: 12,
             backgroundColor: Colors.grey[200],
@@ -230,6 +228,14 @@ class _PostCardState extends State<PostCard> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

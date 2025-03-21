@@ -343,9 +343,25 @@ service cloud.firestore {
     // 게시물 컬렉션 규칙
     // ─────────────────────────────
     match /posts/{postId} {
+      function isValidPost() {
+        let data = request.resource.data;
+        return
+          data.userId is string &&
+          data.title is string &&
+          data.content is string &&
+          data.category is string &&
+          data.createdAt is timestamp &&
+          (!data.keys().hasAny(['viewCount']) || data.viewCount is number);
+      }
+      
       // 게스트 사용자도 게시물 읽기 허용
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPost();
+      allow update: if isAuthenticated() && 
+                    (request.auth.uid == resource.data.userId || 
+                     isAdminRole() || 
+                     // viewCount 필드만 업데이트하는 경우에는 누구나 가능
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']));
 
       match /likes/{userId} {
         allow read: if true;
@@ -457,7 +473,9 @@ service cloud.firestore {
           data.location is latlng &&
           data.participants is list &&
           data.status is string &&
-          (!data.keys().hasAny(['createdAt']) || data.createdAt is timestamp);
+          (!data.keys().hasAny(['createdAt']) || data.createdAt is timestamp) &&
+          (!data.keys().hasAny(['lastMessage']) || data.lastMessage is string) &&
+          (!data.keys().hasAny(['chatRoomId']) || data.chatRoomId is string);
       }
 
       // 게스트 사용자도 모임 목록을 볼 수 있게 함
