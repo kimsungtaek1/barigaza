@@ -211,6 +211,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ),
         actions: [
           PopupMenuButton(
+            icon: Icon(Icons.more_vert),
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'leave',
@@ -462,7 +463,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 Flexible(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(16),
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -495,7 +496,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 Flexible(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.blue,
+                      color: const Color(0xFF1066FF),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -955,7 +956,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.photo),
+              icon: Image.asset('assets/images/gallery.png',width:16,height: 16),
               onPressed: _showImageOptions,
             ),
             Expanded(
@@ -968,7 +969,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: Colors.grey[200],
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
@@ -987,9 +988,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.send),
+              icon: Image.asset('assets/images/send.png',width:16,height: 16),
               onPressed: _isComposing ? _handleSubmitted : null,
-              color: _isComposing ? Colors.blue : Colors.grey[400],
+              color: _isComposing ? Color(0xFF7EA6FD) : Colors.grey[400],
             ),
           ],
         ),

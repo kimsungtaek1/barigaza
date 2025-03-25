@@ -144,6 +144,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         data: bytes,
         contentType: 'image/$fileExtension',
         customMetadata: metadata,
+        isProfileImage: true, // 프로필 이미지 최적화 (200KB 제한)
+        optimizeImage: true,
+        convertToWebpFormat: true, // WebP 포맷으로 변환
       );
 
       if (!result.isSuccess || result.data == null) {
@@ -493,6 +496,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             'timestamp': DateTime.now().toIso8601String(),
             'type': 'profile_image'
           },
+          isProfileImage: true, // 프로필 이미지 최적화 (200KB 제한)
+          optimizeImage: true,
+          convertToWebpFormat: true, // WebP 포맷으로 변환
         );
 
         if (profileResult.isSuccess && profileResult.data != null) {
@@ -519,6 +525,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             'timestamp': DateTime.now().toIso8601String(),
             'type': 'bike_image'
           },
+          isProfileImage: false, // 일반 이미지 최적화 (1MB 제한)
+          optimizeImage: true,
+          convertToWebpFormat: true, // WebP 포맷으로 변환
         );
 
         if (bikeResult.isSuccess && bikeResult.data != null) {

@@ -190,11 +190,11 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                 controller: _tabController,
                 tabs: const [
                   Tab(text: '채팅'),
-                  Tab(text: '사용자'),
+                  Tab(text: '친구'),
                 ],
                 labelColor: Colors.black,
                 unselectedLabelColor: Colors.grey,
-                indicatorColor: Color(0xFF1066FF),
+                indicatorColor: Color(0xFF7EA6FD),
               ),
             ],
           ),
@@ -203,14 +203,26 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: '검색',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                filled: true,
+                fillColor: Colors.grey[100],
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(16), // 라운드 처리
+                  borderSide: BorderSide.none, // 테두리 없애기
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -273,11 +285,6 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
             if (isGroupChat) {
               // 그룹 채팅방인 경우
               chatTitle = chatData['groupName'] ?? '단체 채팅방';
-              // 미팅 ID가 있는 경우 번개 모임 채팅방
-              final meetingId = chatData['meetingId'];
-              if (meetingId != null) {
-                chatTitle = '번개 모임: $chatTitle';
-              }
             } else {
               // 1:1 채팅방인 경우
               final users = (chatData['users'] as List?)?.map((e) => e.toString()).toList() ?? [];
@@ -331,10 +338,10 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
               },
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: isGroupChat ? Colors.blue : null,
+                  backgroundColor: Color(0xFF7EA6FD),
                   backgroundImage: chatImage != null ? NetworkImage(chatImage) : null,
                   child: chatImage == null
-                      ? Icon(isGroupChat ? Icons.group : Icons.person)
+                      ? Icon(Icons.person)
                       : null,
                 ),
                 title: Row(
@@ -380,7 +387,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.blue,
+                            color: Color(0xFF7EA6FD),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -449,11 +456,12 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
 
             return ListTile(
               leading: CircleAvatar(
+                backgroundColor: Color(0xFF7EA6FD),
                 backgroundImage: userData['profileImage'] != null
                     ? NetworkImage(userData['profileImage'])
                     : null,
                 child: userData['profileImage'] == null
-                    ? Text(nickname[0])
+                    ? Icon(Icons.person)
                     : null,
               ),
               title: Text(nickname),

@@ -1,6 +1,9 @@
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart' as path_provider;
 
 // Storage 서비스 클래스
 class StorageService {
@@ -14,6 +17,161 @@ class StorageService {
   }
 
   StorageService._internal();
+  
+  // 이미지 압축 메소드 (프로필 이미지용 - 최대 200KB)
+  Future<Uint8List> compressProfileImage(Uint8List data, String fileName) async {
+    // 임시 파일 경로 설정
+    final dir = await path_provider.getTemporaryDirectory();
+    final targetPath = '${dir.path}/$fileName';
+    final sourceFile = File('${dir.path}/temp_$fileName');
+    await sourceFile.writeAsBytes(data);
+
+    try {
+      // 이미지 압축 (목표 200KB = 204800 bytes)
+      final result = await FlutterImageCompress.compressWithFile(
+        sourceFile.path,
+        minHeight: 300,
+        minWidth: 300,
+        quality: 85,
+        format: CompressFormat.jpeg,
+      );
+      
+      if (result == null) {
+        throw Exception('이미지 압축 실패');
+      }
+      
+      // 압축된 파일이 200KB를 초과하면, 결과 데이터를 파일로 다시 저장하고 더 낮은 품질로 재압축
+      if (result.length > 204800) {
+        final tempFile = File('${dir.path}/temp2_$fileName');
+        await tempFile.writeAsBytes(result);
+        final secondResult = await FlutterImageCompress.compressWithFile(
+          tempFile.path,
+          minHeight: 300,
+          minWidth: 300,
+          quality: 70,
+          format: CompressFormat.jpeg,
+        );
+        
+        await tempFile.delete();
+        if (secondResult == null) {
+          throw Exception('이미지 재압축 실패');
+        }
+        return secondResult;
+      }
+
+      return result;
+    } finally {
+      // 임시 파일 정리
+      if (await sourceFile.exists()) {
+        await sourceFile.delete();
+      }
+    }
+  }
+
+  // 일반 이미지 압축 메소드 (최대 1MB)
+  Future<Uint8List> compressImage(Uint8List data, String fileName) async {
+    // 임시 파일 경로 설정
+    final dir = await path_provider.getTemporaryDirectory();
+    final sourceFile = File('${dir.path}/temp_$fileName');
+    await sourceFile.writeAsBytes(data);
+
+    try {
+      // 이미지 압축 (목표 1MB = 1048576 bytes)
+      final result = await FlutterImageCompress.compressWithFile(
+        sourceFile.path,
+        minHeight: 1024,
+        minWidth: 1024,
+        quality: 85,
+        format: CompressFormat.jpeg,
+      );
+      
+      if (result == null) {
+        throw Exception('이미지 압축 실패');
+      }
+      
+      // 압축된 파일이 1MB를 초과하면 품질을 더 낮춰 다시 압축
+      if (result.length > 1048576) {
+        final tempFile = File('${dir.path}/temp2_$fileName');
+        await tempFile.writeAsBytes(result);
+        final secondResult = await FlutterImageCompress.compressWithFile(
+          tempFile.path,
+          minHeight: 1024, 
+          minWidth: 1024,
+          quality: 75,
+          format: CompressFormat.jpeg,
+        );
+        
+        await tempFile.delete();
+        if (secondResult == null) {
+          throw Exception('이미지 재압축 실패');
+        }
+        return secondResult;
+      }
+
+      return result;
+    } finally {
+      // 임시 파일 정리
+      if (await sourceFile.exists()) {
+        await sourceFile.delete();
+      }
+    }
+  }
+  
+  // WebP 변환 메소드
+  Future<Uint8List> convertToWebP(Uint8List data, String fileName, bool isProfile) async {
+    final dir = await path_provider.getTemporaryDirectory();
+    final sourceFile = File('${dir.path}/temp_$fileName');
+    final targetPath = '${dir.path}/${fileName.split('.').first}.webp';
+    await sourceFile.writeAsBytes(data);
+    
+    try {
+      final quality = isProfile ? 85 : 90;
+      final maxWidth = isProfile ? 300 : 1024;
+      final maxHeight = isProfile ? 300 : 1024;
+      
+      final result = await FlutterImageCompress.compressWithFile(
+        sourceFile.path,
+        format: CompressFormat.webp,
+        quality: quality,
+        minWidth: maxWidth,
+        minHeight: maxHeight,
+      );
+      
+      if (result == null) {
+        throw Exception('WebP 변환 실패');
+      }
+      
+      // 파일 크기 제한 확인 (프로필: 200KB, 일반: 1MB)
+      final maxSize = isProfile ? 204800 : 1048576;
+      if (result.length > maxSize) {
+        // 더 낮은 품질로 다시 압축
+        final lowerQuality = isProfile ? 70 : 80;
+        final tempFile = File('${dir.path}/temp2_$fileName');
+        await tempFile.writeAsBytes(result);
+        
+        final secondResult = await FlutterImageCompress.compressWithFile(
+          tempFile.path,
+          format: CompressFormat.webp,
+          quality: lowerQuality,
+          minWidth: maxWidth,
+          minHeight: maxHeight,
+        );
+        
+        await tempFile.delete();
+        if (secondResult == null) {
+          throw Exception('WebP 재변환 실패');
+        }
+        return secondResult;
+      }
+      
+      return result;
+    } finally {
+      // 임시 파일 정리
+      if (await sourceFile.exists()) {
+        await sourceFile.delete();
+      }
+    }
+  }
 
   // 파일 업로드 메소드
   Future<StorageResult<String>> uploadFile({
@@ -22,24 +180,57 @@ class StorageService {
     String? contentType,
     Map<String, String>? customMetadata,
     Function(double)? onProgress,
+    bool isProfileImage = false,
+    bool optimizeImage = true,
+    bool convertToWebpFormat = false,
   }) async {
     try {
-      final ref = _storage.ref().child(path);
-
+      var ref = _storage.ref().child(path);
+      Uint8List fileData = data;
+      String finalContentType = contentType ?? 'application/octet-stream';
+      
+      // 이미지 최적화 처리
+      if (optimizeImage && finalContentType.startsWith('image/')) {
+        final fileName = path.split('/').last;
+        
+        // WebP 변환이 요청되었으면 변환
+        if (convertToWebpFormat) {
+          fileData = await convertToWebP(data, fileName, isProfileImage);
+          finalContentType = 'image/webp';
+          
+          // 경로에 확장자가 있으면 webp로 변경
+          if (path.contains('.')) {
+            final basePath = path.substring(0, path.lastIndexOf('.'));
+            final newPath = '$basePath.webp';
+            path = newPath;
+            ref = _storage.ref().child(newPath);
+          }
+        } 
+        // 그렇지 않으면 일반 압축만 진행
+        else {
+          if (isProfileImage) {
+            fileData = await compressProfileImage(data, fileName);
+          } else {
+            fileData = await compressImage(data, fileName);
+          }
+        }
+      }
+      
       final metadata = SettableMetadata(
-        contentType: contentType ?? 'application/octet-stream',
+        contentType: finalContentType,
         customMetadata: {
           'uploaded': 'true',
           'timestamp': DateTime.now().toString(),
+          'optimized': optimizeImage.toString(),
           ...?customMetadata,
         },
       );
 
-      final uploadTask = ref.putData(data, metadata);
+      final uploadTask = ref.putData(fileData, metadata);
 
       // 업로드 진행률 모니터링
       uploadTask.snapshotEvents.listen(
-            (TaskSnapshot snapshot) {
+        (TaskSnapshot snapshot) {
           final progress = snapshot.bytesTransferred / snapshot.totalBytes;
           onProgress?.call(progress);
           if (kDebugMode) {
@@ -55,6 +246,11 @@ class StorageService {
 
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
+      
+      if (kDebugMode) {
+        final fileSize = fileData.length / 1024; // KB 단위
+        print('Uploaded file size: ${fileSize.toStringAsFixed(2)} KB');
+      }
 
       return StorageResult.success(downloadUrl);
     } catch (e) {

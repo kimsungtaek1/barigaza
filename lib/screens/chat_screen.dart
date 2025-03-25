@@ -109,6 +109,8 @@ class _ChatScreenState extends State<ChatScreen> {
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
       );
 
       if (image != null) {
@@ -155,6 +157,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   final XFile? image = await picker.pickImage(
                     source: ImageSource.camera,
                     imageQuality: 70,
+                    maxWidth: 1024,
+                    maxHeight: 1024,
                   );
                   if (image != null) {
                     await _chatService.sendImageMessage(
@@ -270,12 +274,13 @@ class _ChatScreenState extends State<ChatScreen> {
       actions: [
         if (widget.isGroupChat)
           IconButton(
-            icon: Icon(Icons.group),
+            icon: Icon(Icons.person),
             onPressed: () {
               setState(() => _isShowingParticipants = !_isShowingParticipants);
             },
           ),
         PopupMenuButton(
+          icon: Icon(Icons.more_vert),
           itemBuilder: (context) => [
             PopupMenuItem(
               value: 'leave',
@@ -451,7 +456,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         Container(
           decoration: BoxDecoration(
-            color: isMe ? Colors.blue : Colors.grey[300],
+            color: isMe ? const Color(0xFF1066FF) : Colors.grey[200],
             borderRadius: BorderRadius.circular(20),
           ),
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -545,7 +550,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Row(
           children: [
             IconButton(
-              icon: Icon(Icons.add_photo_alternate),
+              icon: Image.asset('assets/images/gallery.png',width:16,height: 16),
               onPressed: _showImageOptions,
               color: Colors.grey[600],
             ),
@@ -559,7 +564,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: Colors.grey[200],
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
@@ -576,7 +581,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.send),
+              icon: Image.asset('assets/images/send.png',width:16,height: 16),
               onPressed: _isTyping ? _sendMessage : null,
               color: _isTyping ? Colors.blue : Colors.grey[400],
             ),

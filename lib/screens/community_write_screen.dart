@@ -67,6 +67,9 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
           onProgress: (progress) {
             print('Upload progress: ${(progress * 100).toStringAsFixed(2)}%');
           },
+          isProfileImage: false, // 일반 이미지 최적화 (1MB 제한)
+          optimizeImage: true,
+          convertToWebpFormat: true, // WebP 포맷으로 변환
         );
 
         if (result.isSuccess && result.data != null) {

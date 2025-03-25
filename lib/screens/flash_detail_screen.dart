@@ -421,7 +421,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                             MaterialPageRoute(
                               builder: (context) => ChatRoomScreen(
                                 chatId: chatRoomId,
-                                otherUserNickname: '번개 모임: ${widget.meeting.hostName}님의 바리',
+                                otherUserNickname: '${widget.meeting.hostName}님의 바리',
                               ),
                             ),
                           );
@@ -450,7 +450,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                             onPressed: _isJoining ? null : _requestJoinMeeting,
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(120, 45),
-                              backgroundColor: Colors.blue,
+                              backgroundColor: Color(0xFF7EA6FD),
                             ),
                             child: _isJoining
                                 ? const SizedBox(

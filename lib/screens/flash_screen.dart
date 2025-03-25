@@ -569,283 +569,430 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
             backgroundColor: Colors.white,
           ),
         ),
-        child: AlertDialog(
-          title: const Text('번개 모임 만들기'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: '모임 제목',
-                    hintText: '모임 제목을 입력해주세요',
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0, bottom: 16.0, left: 20.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '번개 모임 만들기',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: departureAddressController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: '출발지',
-                    hintText: '출발지를 검색해주세요',
-                    border: const OutlineInputBorder(),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const NaverAddressSearch(),
-                          ),
-                        );
-                        if (result != null) {
-                          departureAddressController.text = result;
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: departureDetailAddressController,
-                  decoration: const InputDecoration(
-                    labelText: '출발지 상세주소',
-                    hintText: '출발지 상세주소를 입력해주세요 (선택)',
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: destinationAddressController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: '목적지',
-                    hintText: '목적지를 검색해주세요',
-                    border: const OutlineInputBorder(),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const NaverAddressSearch(),
-                          ),
-                        );
-                        if (result != null) {
-                          destinationAddressController.text = result;
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: destinationDetailAddressController,
-                  decoration: const InputDecoration(
-                    labelText: '목적지 상세주소',
-                    hintText: '목적지 상세주소를 입력해주세요 (선택)',
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: timeController,
-                  decoration: const InputDecoration(
-                    labelText: '모임 시간',
-                    suffixIcon: Icon(Icons.access_time),
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                  ),
-                  readOnly: true,
-                  onTap: () async {
-                    final now = DateTime.now();
-                    final DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: now,
-                      firstDate: now,
-                      lastDate: now.add(const Duration(days: 30)),
-                      builder: (context, child) => Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: Colors.blue,
-                            onPrimary: Colors.white,
-                            onSurface: Colors.black,
-                          ),
-                          textButtonTheme: TextButtonThemeData(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.blue,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 모임 제목
+                        TextFormField(
+                          controller: titleController,
+                          decoration: InputDecoration(
+                            labelText: '모임 제목',
+                            hintText: '모임 제목을 입력해주세요',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
                             ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            filled: true,
+                            fillColor: Colors.white,
                           ),
                         ),
-                        child: child!,
-                      ),
-                    );
+                        SizedBox(height: 16),
 
-                    if (pickedDate != null) {
-                      final TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                        builder: (context, child) => Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: const ColorScheme.light(
-                              primary: Colors.blue,
-                              onPrimary: Colors.white,
-                              onSurface: Colors.black,
+                        // 모임 시간
+                        TextFormField(
+                          controller: timeController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: '모임 시간',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            prefixIcon: Icon(Icons.access_time, size: 16, color: Theme.of(context).primaryColor),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
                             ),
-                            textButtonTheme: TextButtonThemeData(
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.blue,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          onTap: () async {
+                            final now = DateTime.now();
+                            final DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: now,
+                              firstDate: now,
+                              lastDate: now.add(const Duration(days: 30)),
+                              builder: (context, child) => Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: Colors.blue,
+                                    onPrimary: Colors.white,
+                                    onSurface: Colors.black,
+                                  ),
+                                  textButtonTheme: TextButtonThemeData(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.blue,
+                                    ),
+                                  ),
+                                ),
+                                child: child!,
+                              ),
+                            );
+
+                            if (pickedDate != null) {
+                              final TimeOfDay? pickedTime = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                                builder: (context, child) => Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: Colors.blue,
+                                      onPrimary: Colors.white,
+                                      onSurface: Colors.black,
+                                    ),
+                                    textButtonTheme: TextButtonThemeData(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.blue,
+                                      ),
+                                    ),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+
+                              if (pickedTime != null) {
+                                selectedTime = DateTime(
+                                  pickedDate.year,
+                                  pickedDate.month,
+                                  pickedDate.day,
+                                  pickedTime.hour,
+                                  pickedTime.minute,
+                                );
+                                timeController.text = DateFormat('yyyy년 MM월 dd일 HH시 mm분')
+                                    .format(selectedTime!);
+                              }
+                            }
+                          },
+                        ),
+                        SizedBox(height: 32),
+                        
+                        // 출발지
+                        TextFormField(
+                          controller: departureAddressController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: '출발지',
+                            hintText: '출발지를 검색해주세요',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Image.asset(
+                                'assets/images/marker.png',
+                                width: 8,
+                                height: 8,
                               ),
                             ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            filled: true,
+                            fillColor: Colors.white,
                           ),
-                          child: child!,
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NaverAddressSearch(),
+                              ),
+                            );
+                            if (result != null) {
+                              departureAddressController.text = result;
+                            }
+                          },
                         ),
-                      );
+                        SizedBox(height: 8),
+                      
+                        // 출발지 상세주소
+                        TextFormField(
+                          controller: departureDetailAddressController,
+                          decoration: InputDecoration(
+                            labelText: '출발지 상세주소',
+                            hintText: '출발지 상세주소를 입력해주세요 (선택)',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 32),
+                        
+                        // 목적지
+                        TextFormField(
+                          controller: destinationAddressController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: '목적지',
+                            hintText: '목적지를 검색해주세요',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Image.asset(
+                                'assets/images/marker.png',
+                                width: 8,
+                                height: 8,
+                              ),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NaverAddressSearch(),
+                              ),
+                            );
+                            if (result != null) {
+                              destinationAddressController.text = result;
+                            }
+                          },
+                        ),
+                        SizedBox(height: 8),
+                      
+                        // 목적지 상세주소
+                        TextFormField(
+                          controller: destinationDetailAddressController,
+                          decoration: InputDecoration(
+                            labelText: '목적지 상세주소',
+                            hintText: '목적지 상세주소를 입력해주세요 (선택)',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                              borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            '취소',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          if (titleController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('모임 제목을 입력해주세요.')),
+                            );
+                            return;
+                          }
+                          if (departureAddressController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('출발지를 선택해주세요.')),
+                            );
+                            return;
+                          }
+                          if (destinationAddressController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('목적지를 선택해주세요.')),
+                            );
+                            return;
+                          }
+                          if (selectedTime == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('시간을 선택해주세요.')),
+                            );
+                            return;
+                          }
+                          if (selectedTime!.isBefore(DateTime.now())) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('현재 시간 이후로 선택해주세요.')),
+                            );
+                            return;
+                          }
+                          try {
+                            selectedLocation =
+                            await getCoordinatesFromAddress(departureAddressController.text);
+                            if (selectedLocation == null) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('출발지 주소를 좌표로 변환하는데 실패했습니다.')),
+                              );
+                              return;
+                            }
+                            final newMeeting = {
+                              'title': titleController.text,
+                              'hostId': user.uid,
+                              'hostName': user.displayName ?? '익명',
+                              'departureAddress': departureAddressController.text,
+                              'departureDetailAddress': departureDetailAddressController.text,
+                              'destinationAddress': destinationAddressController.text,
+                              'destinationDetailAddress': destinationDetailAddressController.text,
+                              'meetingTime': Timestamp.fromDate(selectedTime!),
+                              'location': selectedLocation,
+                              'participants': [user.uid],
+                              'status': 'active',
+                              'createdAt': Timestamp.now(),
+                            };
 
-                      if (pickedTime != null) {
-                        selectedTime = DateTime(
-                          pickedDate.year,
-                          pickedDate.month,
-                          pickedDate.day,
-                          pickedTime.hour,
-                          pickedTime.minute,
-                        );
-                        timeController.text = DateFormat('yyyy년 MM월 dd일 HH시 mm분')
-                            .format(selectedTime!);
-                      }
-                    }
-                  },
+                            await FirebaseFirestore.instance.runTransaction((transaction) async {
+                              final meetingRef = await FirebaseFirestore.instance
+                                  .collection('meetings')
+                                  .add(newMeeting);
+
+                              final chatId = await _chatService.createGroupChatRoom(
+                                [user.uid],
+                                titleController.text,
+                                meetingId: meetingRef.id,
+                              );
+
+                              transaction.update(meetingRef, {
+                                'chatRoomId': chatId
+                              });
+                            });
+
+                            if (!mounted) return;
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('모임이 성공적으로 생성되었습니다.'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('모임 생성 중 오류가 발생했습니다: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            '저장',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('취소'),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.grey[600],
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (titleController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('모임 제목을 입력해주세요.')),
-                  );
-                  return;
-                }
-                if (departureAddressController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('출발지를 선택해주세요.')),
-                  );
-                  return;
-                }
-                if (destinationAddressController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('목적지를 선택해주세요.')),
-                  );
-                  return;
-                }
-                if (selectedTime == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('시간을 선택해주세요.')),
-                  );
-                  return;
-                }
-                if (selectedTime!.isBefore(DateTime.now())) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('현재 시간 이후로 선택해주세요.')),
-                  );
-                  return;
-                }
-                try {
-                  selectedLocation =
-                  await getCoordinatesFromAddress(departureAddressController.text);
-                  if (selectedLocation == null) {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('출발지 주소를 좌표로 변환하는데 실패했습니다.')),
-                    );
-                    return;
-                  }
-                  final newMeeting = {
-                    'title': titleController.text,
-                    'hostId': user.uid,
-                    'hostName': user.displayName ?? '익명',
-                    'departureAddress': departureAddressController.text,
-                    'departureDetailAddress': departureDetailAddressController.text,
-                    'destinationAddress': destinationAddressController.text,
-                    'destinationDetailAddress': destinationDetailAddressController.text,
-                    'meetingTime': Timestamp.fromDate(selectedTime!),
-                    'location': selectedLocation,
-                    'participants': [user.uid],
-                    'status': 'active',
-                    'createdAt': Timestamp.now(),
-                  };
-
-                  await FirebaseFirestore.instance.runTransaction((transaction) async {
-                    final meetingRef = await FirebaseFirestore.instance
-                        .collection('meetings')
-                        .add(newMeeting);
-
-                    final chatId = await _chatService.createGroupChatRoom(
-                      [user.uid],
-                      titleController.text,
-                      meetingId: meetingRef.id,
-                    );
-
-                    transaction.update(meetingRef, {
-                      'chatRoomId': chatId
-                    });
-                  });
-
-                  if (!mounted) return;
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('모임이 성공적으로 생성되었습니다.'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                } catch (e) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('모임 생성 중 오류가 발생했습니다: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('만들기'),
-            ),
-          ],
         ),
       ),
+    ),
     );
   }
 

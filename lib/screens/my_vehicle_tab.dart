@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/maintenance_period.dart';
 import '../models/maintenance_record.dart';
+import '../screens/fuel_record_screen.dart';
 import '../services/maintenance_service.dart';
 import '../services/maintenance_tracking_service.dart';
 import '../services/storage_service.dart';
@@ -347,16 +348,16 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                       Text(
                         '누적 주행거리: ',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                            fontSize: 18,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       Text(
                         '${(_userData['currentMileage'] ?? 0).toString()} km',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -466,45 +467,80 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                           final date = DateTime.parse(record['date']);
                           final formattedDate = '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
                           
-                          return Card(
-                            margin: EdgeInsets.only(bottom: 8),
-                            color: Colors.white,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          formattedDate,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Theme.of(context).primaryColor,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          '₩${record['cost'].toInt()} / ${record['amount'].toStringAsFixed(1)}L',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
+                          return GestureDetector(
+                            onTap: () async {
+                              try {
+                                // 해당 레코드의 ID 가져오기
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user == null) return;
+                                
+                                final querySnapshot = await _firestore
+                                    .collection('users')
+                                    .doc(user.uid)
+                                    .collection('fuel_records')
+                                    .orderBy('date', descending: true)
+                                    .limit(5)
+                                    .get();
+                                
+                                if (index < querySnapshot.docs.length) {
+                                  final recordId = querySnapshot.docs[index].id;
+                                  
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FuelRecordScreen(recordId: recordId),
                                     ),
-                                  ),
-                                  Text(
-                                    '${record['fuelEfficiency'].toStringAsFixed(1)} km/L',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
+                                  );
+                                  
+                                  if (result == true) {
+                                    await _loadData();
+                                    setState(() {});
+                                  }
+                                }
+                              } catch (e) {
+                                print('Error opening fuel record: $e');
+                              }
+                            },
+                            child: Card(
+                              margin: EdgeInsets.only(bottom: 8),
+                              color: Colors.white,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            formattedDate,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            '₩${record['cost'].toInt()} / ${record['amount'].toStringAsFixed(1)}L',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      '${record['fuelEfficiency'].toStringAsFixed(1)} km/L',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -762,24 +798,24 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () => _showPeriodUpdateDialog(partType),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF5F3ED),
-                            foregroundColor: Colors.black,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 0,
+                        GestureDetector(
+                          onTap: () => _showPeriodUpdateDialog(partType),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5F3ED),
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                            minimumSize: Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            textStyle: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                            child: const Text(
+                              '주기설정',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
-                          child: const Text('주기설정'),
                         ),
                       ],
                     ),
@@ -1014,99 +1050,179 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('교체 주기 설정'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '주행거리 주기 (km)',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-            TextField(
-              controller: kmController,
-              decoration: InputDecoration(
-                hintText: '숫자만 입력해주세요',
-              ),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            ),
-            if (partType == 'oilFilter' || partType == 'battery')
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Container(
+          width: 300,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Padding(
-                padding: const EdgeInsets.only(top: 8.0),
+                padding: const EdgeInsets.only(top: 20.0, bottom: 16.0),
+                child: Center(
+                  child: Text(
+                    '교체 주기 설정',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '시간 주기 (개월)',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '주행거리 주기(km)',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        Container(
+                          width: 100,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                          ),
+                          child: TextField(
+                            controller: kmController,
+                            textAlign: TextAlign.right,
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              border: InputBorder.none,
+                              hintText: '숫자 입력',
+                              hintStyle: TextStyle(fontSize: 13),
+                            ),
+                            style: TextStyle(fontSize: 14),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          ),
+                        ),
+                      ],
                     ),
-                    TextField(
-                      controller: monthController,
-                      decoration: InputDecoration(
-                        hintText: '숫자만 입력해주세요',
+                    if (partType == 'oilFilter' || partType == 'battery')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '시간 주기(개월)',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            Container(
+                              width: 100,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade400),
+                              ),
+                              child: TextField(
+                                controller: monthController,
+                                textAlign: TextAlign.right,
+                                decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  border: InputBorder.none,
+                                  hintText: '숫자 입력',
+                                  hintStyle: TextStyle(fontSize: 13),
+                                ),
+                                style: TextStyle(fontSize: 14),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    ),
                   ],
                 ),
               ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.black,
-            ),
-            child: Text('취소'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('로그인이 필요합니다')),
-                  );
-                  return;
-                }
-
-                final maintenanceService = MaintenanceService(userId: user.uid);
-
-                await maintenanceService.updateMaintenancePeriod(
-                  partType,
-                  MaintenancePeriod(
-                    kilometers: int.parse(kmController.text),
-                    months: monthController.text.isNotEmpty
-                        ? int.parse(monthController.text)
-                        : null,
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Color(0xFFE5E7EB),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          '취소',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                );
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        try {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('로그인이 필요합니다')),
+                            );
+                            return;
+                          }
 
-                Navigator.pop(context);
-                await _loadMaintenancePeriods();
+                          final maintenanceService = MaintenanceService(userId: user.uid);
 
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('교체 주기가 업데이트되었습니다')),
-                  );
-                }
-              } catch (e) {
-                print('Error updating period: $e');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('교체 주기 업데이트에 실패했습니다')),
-                );
-              }
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.black,
-            ),
-            child: Text('저장'),
+                          await maintenanceService.updateMaintenancePeriod(
+                            partType,
+                            MaintenancePeriod(
+                              kilometers: int.parse(kmController.text),
+                              months: monthController.text.isNotEmpty
+                                  ? int.parse(monthController.text)
+                                  : null,
+                            ),
+                          );
+
+                          Navigator.pop(context);
+                          await _loadMaintenancePeriods();
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('교체 주기가 업데이트되었습니다')),
+                            );
+                          }
+                        } catch (e) {
+                          print('Error updating period: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('교체 주기 업데이트에 실패했습니다')),
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.only(
+                            bottomRight: Radius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          '저장',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

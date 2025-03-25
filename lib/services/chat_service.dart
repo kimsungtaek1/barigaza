@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
+import 'storage_service.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -71,9 +73,6 @@ class ChatService {
 
     final chatRoomId = meetingId != null ? 'meeting_$meetingId' : DateTime.now().millisecondsSinceEpoch.toString();
 
-    // 그룹명에 '번개 모임:' 접두어 추가
-    final formattedGroupName = meetingId != null ? '번개 모임: $groupName' : groupName;
-
     Map<String, dynamic> userDetails = {};
     for (String userId in participantIds) {
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -85,7 +84,7 @@ class ChatService {
 
     await _firestore.collection('chatRooms').doc(chatRoomId).set({
       'users': participantIds,
-      'groupName': formattedGroupName,  // 수정된 그룹명 사용
+      'groupName': meetingId,  // 수정된 그룹명 사용
       'createdAt': Timestamp.now(),
       'lastMessage': '',
       'lastMessageTime': Timestamp.now(),
@@ -180,15 +179,34 @@ class ChatService {
       // 디버깅: 발신자 닉네임 확인
       print('Sender Nickname: $senderNickname');
 
-      // Storage에 이미지 업로드
-      final storageRef = _storage
-          .ref()
-          .child('chat_images')
-          .child(chatRoomId)
-          .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-
-      await storageRef.putFile(imageFile);
-      final imageUrl = await storageRef.getDownloadURL();
+      // 이미지 최적화를 위한, 파일 데이터 불러오기
+      final bytes = await imageFile.readAsBytes();
+      final String fileExtension = imageFile.path.split('.').last.toLowerCase();
+      final String fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+      final String storagePath = 'chat_images/$chatRoomId/$fileName';
+      
+      // 스토리지 서비스를 통한 이미지 업로드(최적화 적용)
+      final storageService = StorageService();
+      final result = await storageService.uploadFile(
+        path: storagePath,
+        data: bytes,
+        contentType: 'image/$fileExtension',
+        customMetadata: {
+          'uploadedBy': currentUser.uid,
+          'timestamp': DateTime.now().toIso8601String(),
+          'type': 'chat_image',
+          'chatRoomId': chatRoomId
+        },
+        isProfileImage: false, // 채팅 이미지도 일반 이미지 최적화 (1MB 제한)
+        optimizeImage: true,
+        convertToWebpFormat: true, // WebP 포맷으로 변환
+      );
+      
+      if (!result.isSuccess || result.data == null) {
+        throw Exception(result.error ?? '이미지 업로드에 실패했습니다.');
+      }
+      
+      final imageUrl = result.data;
 
       // 디버깅: 이미지 URL 확인
       print('Image URL: $imageUrl');

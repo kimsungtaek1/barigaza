@@ -7,7 +7,12 @@ import '../services/maintenance_tracking_service.dart';
 import '../widgets/ad_banner_widget.dart';
 
 class FuelRecordScreen extends StatefulWidget {
-  const FuelRecordScreen({Key? key}) : super(key: key);
+  final String? recordId;
+  
+  const FuelRecordScreen({
+    Key? key,
+    this.recordId,
+  }) : super(key: key);
 
   @override
   State<FuelRecordScreen> createState() => _FuelRecordScreenState();
@@ -15,16 +20,26 @@ class FuelRecordScreen extends StatefulWidget {
 
 class _FuelRecordScreenState extends State<FuelRecordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _distanceController = TextEditingController();
-  final _amountController = TextEditingController();
-  final _priceController = TextEditingController();
-  String? selectedFuelType;
+  final _distanceController = TextEditingController(text: '0');
+  final _amountController = TextEditingController(text: '0');
+  final _priceController = TextEditingController(text: '0');
+  final _memoController = TextEditingController();
+  String? selectedFuelType = '휘발유';
   bool _isLoading = false;
+  String? _recordId;
+  bool _isEditing = false;
 
   @override
   void initState() {
     super.initState();
-    _loadLastMileage();
+    _recordId = widget.recordId;
+    _isEditing = _recordId != null;
+    
+    if (_isEditing) {
+      _loadExistingRecord();
+    } else {
+      _loadLastMileage();
+    }
   }
 
   @override
@@ -32,10 +47,61 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
     _distanceController.dispose();
     _amountController.dispose();
     _priceController.dispose();
+    _memoController.dispose();
     super.dispose();
   }
 
   double _previousMileage = 0.0;
+  double _originalDistance = 0.0;
+  
+  Future<void> _loadExistingRecord() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      // 사용자 정보 로드
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+          
+      if (userDoc.exists && userDoc.data()?['currentMileage'] != null) {
+        _previousMileage = double.parse(userDoc.data()!['currentMileage'].toString());
+      }
+      
+      // 기존 주유 기록 로드
+      final recordDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('fuel_records')
+          .doc(_recordId)
+          .get();
+      
+      if (recordDoc.exists) {
+        final data = recordDoc.data()!;
+        setState(() {
+          _distanceController.text = data['distance'].toString();
+          _originalDistance = double.parse(data['distance'].toString());
+          _amountController.text = data['amount'].toString();
+          _priceController.text = data['cost'].toString();
+          selectedFuelType = data['type'];
+          _memoController.text = data['memo'] ?? '';
+        });
+      }
+    } catch (e) {
+      print('Error loading existing record: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('기존 기록을 불러오는데 실패했습니다')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
   
   Future<void> _loadLastMileage() async {
     try {
@@ -50,8 +116,6 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
       if (userDoc.exists && userDoc.data()?['currentMileage'] != null) {
         setState(() {
           _previousMileage = double.parse(userDoc.data()!['currentMileage'].toString());
-          // 주행거리 필드는 빈 값으로 시작 (사용자가 추가 주행거리 입력하도록)
-          _distanceController.text = '';
         });
       }
     } catch (e) {
@@ -105,43 +169,68 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('로그인이 필요합니다');
 
-      // users 컬렉션 내의 fuel_records 서브컬렉션에 저장
+      // users 컬렉션 내의 fuel_records 서브컬렉션에 저장할 데이터
       final record = {
         'distance': double.parse(_distanceController.text),
         'amount': double.parse(_amountController.text),
         'type': selectedFuelType!,
         'cost': double.parse(_priceController.text),
-        'date': DateTime.now(),
+        'memo': _memoController.text,
       };
-
-      // users/{userId}/fuel_records에 저장
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('fuel_records')
-          .add(record);
-
-      // 현재 주행거리 업데이트 (이전 주행거리 + 추가 주행거리)
-      final updatedMileage = _previousMileage + double.parse(_distanceController.text);
       
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
-        'currentMileage': updatedMileage,
-        'lastFuelRecord': {
-          'date': Timestamp.fromDate(DateTime.now()),
-          'fuelType': selectedFuelType,
-          'amount': double.parse(_amountController.text),
-          'price': double.parse(_priceController.text),
-        },
-      });
+      final usersRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      
+      if (_isEditing) {
+        // 기존 기록 수정
+        record['date'] = FieldValue.serverTimestamp(); // 수정 시간으로 업데이트
+        
+        await usersRef.collection('fuel_records').doc(_recordId).update(record);
+        
+        // 주행거리 차이만큼 현재 주행거리에서 조정
+        final distanceDifference = double.parse(_distanceController.text) - _originalDistance;
+        final updatedMileage = _previousMileage + distanceDifference;
+        
+        await usersRef.update({
+          'currentMileage': updatedMileage,
+          'lastFuelRecord': {
+            'date': Timestamp.fromDate(DateTime.now()),
+            'fuelType': selectedFuelType,
+            'amount': double.parse(_amountController.text),
+            'price': double.parse(_priceController.text),
+          },
+        });
+        
+        if (mounted) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('주유 기록이 수정되었습니다')),
+          );
+        }
+      } else {
+        // 새 기록 추가
+        record['date'] = DateTime.now();
+        
+        await usersRef.collection('fuel_records').add(record);
 
-      if (mounted) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('주유 기록이 저장되었습니다')),
-        );
+        // 현재 주행거리 업데이트 (이전 주행거리 + 추가 주행거리)
+        final updatedMileage = _previousMileage + double.parse(_distanceController.text);
+        
+        await usersRef.update({
+          'currentMileage': updatedMileage,
+          'lastFuelRecord': {
+            'date': Timestamp.fromDate(DateTime.now()),
+            'fuelType': selectedFuelType,
+            'amount': double.parse(_amountController.text),
+            'price': double.parse(_priceController.text),
+          },
+        });
+
+        if (mounted) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('주유 기록이 저장되었습니다')),
+          );
+        }
       }
     } catch (e) {
       print('Error saving fuel record: $e');
@@ -169,13 +258,14 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          '주유 기록하기',
+          _isEditing ? '주유 기록 수정' : '주유 기록하기',
           style: TextStyle(fontSize: 16),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
       ),
+      resizeToAvoidBottomInset: true, // 키보드가 올라오면 화면이 스크롤되도록 변경
       body: Stack(
         children: [
           Column(
@@ -211,10 +301,18 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                             ],
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Color(0xFFF7F7F7),
+                              fillColor: Colors.white,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
                               ),
                               suffixText: 'km',
                               errorStyle: TextStyle(
@@ -237,10 +335,18 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                             ],
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Color(0xFFF7F7F7),
+                              fillColor: Colors.white,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
                               ),
                               suffixText: '원',
                               errorStyle: TextStyle(
@@ -263,17 +369,18 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                                 child: Container(
                                   padding: EdgeInsets.symmetric(horizontal: 12),
                                   decoration: BoxDecoration(
-                                    color: Color(0xFFF7F7F7),
+                                    color: Colors.white,
                                     borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Color(0xFFF5F5F5)),
                                   ),
                                   child: DropdownButtonFormField<String>(
                                     value: selectedFuelType,
                                     hint: Text('선택'),
-                                    dropdownColor: Color(0xFFF7F7F7),
-                                    menuMaxHeight: 200,  // 추가
+                                    dropdownColor: Colors.white,
+                                    menuMaxHeight: 200,
                                     decoration: InputDecoration(
-                                      filled: true,  // 추가
-                                      fillColor: Color(0xFFF7F7F7), // 추가
+                                      filled: true,
+                                      fillColor: Colors.white,
                                       border: InputBorder.none,
                                       errorStyle: TextStyle(
                                         color: Colors.red,
@@ -284,8 +391,8 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                                         .map<DropdownMenuItem<String>>((String value) {
                                       return DropdownMenuItem<String>(
                                         value: value,
-                                        child: Container(  // 감싸기
-                                          color: Color(0xFFF7F7F7),  // 각 아이템의 배경색 설정
+                                        child: Container(
+                                          color: Colors.white,
                                           child: Text(value),
                                         ),
                                       );
@@ -314,10 +421,18 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                                   ],
                                   decoration: InputDecoration(
                                     filled: true,
-                                    fillColor: Color(0xFFF7F7F7),
+                                    fillColor: Colors.white,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
+                                      borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(color: Color(0xFFF5F5F5)),
                                     ),
                                     suffixText: 'L',
                                     errorStyle: TextStyle(
@@ -329,6 +444,39 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                          SizedBox(height: 24),
+                          
+                          // 메모 입력 필드 추가
+                          Text('메모'),
+                          SizedBox(height: 8),
+                          TextFormField(
+                            controller: _memoController,
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                              ),
+                              hintText: '메모를 입력 하세요',
+                              hintStyle: TextStyle(
+                                color: Colors.grey,
+                              ),
+                              errorStyle: TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -360,7 +508,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                            : Text('저장하기'),
+                            : Text(_isEditing ? '수정하기' : '저장하기'),
                       ),
                     ),
                     SizedBox(height: 8),
