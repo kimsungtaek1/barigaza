@@ -38,13 +38,25 @@ android {
     compileSdkVersion 34
     ndkVersion flutter.ndkVersion
 
-    // 릴리즈 서명 정보 추가
+    // 릴리즈 서명 정보 추가 - key.properties 파일 존재 여부에 따라 조건부 설정
     signingConfigs {
+        debug {
+            // 디버그 모드 서명 설정 - 기본 디버그 키 사용
+        }
         release {
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
+            // 릴리즈 모드 서명 설정 - key.properties 파일이 있을 때만 설정
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            } else {
+                // key.properties 파일이 없으면 디버그 설정 사용
+                storeFile signingConfigs.debug.storeFile
+                storePassword signingConfigs.debug.storePassword
+                keyAlias signingConfigs.debug.keyAlias
+                keyPassword signingConfigs.debug.keyPassword
+            }
         }
     }
 
@@ -73,11 +85,14 @@ android {
 
     buildTypes {
         release {
-            // 릴리즈 빌드 시 서명 구성에 방금 추가한 release 서명 정보를 사용합니다.
+            // 항상 사용 가능한 서명 설정 사용
             signingConfig signingConfigs.release
             // 릴리즈 빌드 최적화 관련 옵션 (원하는 경우 설정)
             minifyEnabled true
             shrinkResources true
+        }
+        debug {
+            signingConfig signingConfigs.debug
         }
     }
 
