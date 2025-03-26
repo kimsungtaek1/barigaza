@@ -34,23 +34,42 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
         throw Exception('로그인이 필요합니다');
       }
 
-      // 채팅방 생성 또는 기존 채팅방 가져오기
-      final chatId = await _chatService.createChatRoom(widget.userId);
+      // 현재 사용자의 친구 목록 가져오기
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      
+      // 친구 목록이 없으면 새로 생성
+      final userData = userDoc.data() ?? {};
+      List<String> friends = List<String>.from(userData['friends'] ?? []);
+      
+      // 이미 친구 목록에 있는지 확인
+      if (friends.contains(widget.userId)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('이미 친구로 추가되어 있습니다')),
+          );
+        }
+        return;
+      }
+      
+      // 친구 목록에 추가
+      friends.add(widget.userId);
+      
+      // 사용자 문서 업데이트
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .update({'friends': friends});
 
       if (mounted) {
         // 다이얼로그 닫기
         Navigator.of(context).pop();
-
-        // 채팅 화면으로 이동
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatScreen(
-              chatRoomId: chatId,
-              otherUserName: widget.nickname,
-              isGroupChat: false,
-            ),
-          ),
+        
+        // 성공 메시지 표시
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${widget.nickname}님이 친구로 추가되었습니다')),
         );
       }
     } catch (e) {
@@ -78,27 +97,19 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '친구 추가',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
             const SizedBox(height: 24),
             CircleAvatar(
               radius: 50,
+              backgroundColor: Color(0xFF7EA6FD), // 친구 탭의 원 배경색과 동일하게 설정
               backgroundImage: widget.profileImage != null
                   ? NetworkImage(widget.profileImage!)
                   : null,
               child: widget.profileImage == null
-                  ? Text(
-                widget.nickname[0].toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
+                  ? Icon(
+                  Icons.person,
+                  size: 40,
+                  color: Colors.white,
+                )
                   : null,
             ),
             const SizedBox(height: 16),
@@ -134,7 +145,7 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                   ),
                 )
                     : const Text(
-                  '대화하기',
+                  '친구추가',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

@@ -233,8 +233,8 @@ class PostService {
       }
 
       if (category == '팔로잉') {
-        // '팔로잉'인 경우: createdAt 기준 정렬 및 제한
-        query = query.orderBy('createdAt', descending: true).limit(50);
+        // '팔로잉'인 경우: 정렬은 아래 쿼리에서 적용 (친구 목록 필터링)
+        // 여기서는 기본 쿼리만 사용
       } else if (category != '탐색') {
         // '탐색'이 아닌 모든 카테고리: 카테고리 필터링 적용
         print('카테고리 필터링: $category');
@@ -268,19 +268,41 @@ class PostService {
         
         // 차단된 사용자 목록 가져오기 (로그인한 경우만)
         List<String> blockedUsers = [];
+        // 팔로잉 목록(친구 목록) 가져오기
+        List<String> friends = [];
+        
         if (currentUser != null) {
           blockedUsers = await getBlockedUsers();
+          
+          // 친구 목록 가져오기
+          if (category == '팔로잉') {
+            final userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
+            final userData = userDoc.data() ?? {};
+            friends = List<String>.from(userData['friends'] ?? []);
+          }
         }
         
-        // 게시글 변환 및 차단된 사용자의 게시글 필터링
+        // 게시글 변환 및 필터링
         final posts = snapshot.docs.map((doc) {
           return Post.fromMap(doc.data() as Map<String, dynamic>, doc.id);
         }).where((post) {
           // 차단된 사용자의 게시글 제외
-          return !blockedUsers.contains(post.userId);
+          if (blockedUsers.contains(post.userId)) {
+            return false;
+          }
+          
+          // 팔로잉 탭에서는 친구가 작성한 게시글만 표시
+          if (category == '팔로잉') {
+            return friends.contains(post.userId);
+          }
+          
+          return true;
         }).toList();
         
+        // 정렬 적용
         if (category == '팔로잉') {
+          // 최신순으로 정렬
+          posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return posts.take(20).toList();
         }
         

@@ -150,16 +150,19 @@ service cloud.firestore {
                    request.auth.uid == userId;
       allow update: if
           // 사용자가 자신의 정보를 수정하는 경우
-          (isUserAuthenticated(userId) &&
-            (hasValidBikeFields() ||
-             (!request.resource.data.diff(resource.data).affectedKeys()
-               .hasAny(['bikeManufacturer', 'bikeName', 'hasBikeInfo'])))
-          )
+          (isUserAuthenticated(userId))
           ||
           // 관리자 계정이 role 필드만 업데이트하는 경우
           (isAdminRole() &&
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
           );
+          
+      // 친구 목록 필드 검증 함수 추가
+      function isValidFriendsList() {
+        let data = request.resource.data;
+        return data.friends is list && 
+               data.friends.size() <= 1000; // 친구 목록 최대 크기 제한
+      }
       allow delete: if isAdminRole();
     }
 
