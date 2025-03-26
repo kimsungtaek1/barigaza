@@ -35,7 +35,6 @@ dependencies:
   flutter_svg: ^2.0.9
   share_plus: ^10.1.4
   flutter_image_compress: ^2.4.0
-  flutter_native_image: ^0.0.6+1
 
 dev_dependencies:
   flutter_test:
