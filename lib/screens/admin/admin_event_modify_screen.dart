@@ -25,8 +25,10 @@ class EventModifyScreen extends StatefulWidget {
 class _EventModifyScreenState extends State<EventModifyScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  final _subtitleController = TextEditingController();
+  // final _subtitleController = TextEditingController(); // Removed subtitle
   final _contentController = TextEditingController();
+  final _locationController = TextEditingController(); // Added location
+  final _linkController = TextEditingController();     // Added link
   DateTime _startDate = DateTime.now(); // 기본값 설정
   DateTime _endDate = DateTime.now().add(Duration(days: 7)); // 기본값 설정
   File? _imageFile;
@@ -42,8 +44,10 @@ class _EventModifyScreenState extends State<EventModifyScreen> {
   void _initializeData() {
     if (widget.event != null) {
       _titleController.text = widget.event!.title;
-      _subtitleController.text = widget.event!.subtitle;
+      // _subtitleController.text = widget.event!.subtitle; // Removed subtitle
       _contentController.text = widget.event!.content;
+      _locationController.text = widget.event!.location ?? ''; // Initialize location
+      _linkController.text = widget.event!.link ?? '';         // Initialize link
       _startDate = widget.event!.startDate;
       _endDate = widget.event!.endDate;
       _currentImageUrl = widget.event!.imageUrl;
@@ -88,14 +92,19 @@ class _EventModifyScreenState extends State<EventModifyScreen> {
                 label: '제목',
                 validator: (value) => value?.isEmpty ?? true ? '제목을 입력하세요' : null,
               ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _subtitleController,
-                label: '소제목',
-                validator: (value) => value?.isEmpty ?? true ? '소제목을 입력하세요' : null,
-              ),
+              // Removed subtitle field
               const SizedBox(height: 16),
               _buildDateRangeField(),
+              const SizedBox(height: 16),
+              _buildTextField( // Added location field
+                controller: _locationController,
+                label: '위치 (선택 사항)',
+              ),
+              const SizedBox(height: 16),
+              _buildTextField( // Added link field
+                controller: _linkController,
+                label: '링크 (선택 사항)',
+              ),
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _contentController,
@@ -384,8 +393,10 @@ class _EventModifyScreenState extends State<EventModifyScreen> {
 
       final eventData = {
         'title': _titleController.text,
-        'subtitle': _subtitleController.text,
+        // 'subtitle': _subtitleController.text, // Removed subtitle
         'content': _contentController.text,
+        'location': _locationController.text.isNotEmpty ? _locationController.text : null, // Add location
+        'link': _linkController.text.isNotEmpty ? _linkController.text : null,         // Add link
         'imageUrl': imageUrl ?? _currentImageUrl ?? '',
         'startDate': Timestamp.fromDate(_startDate!),
         'endDate': Timestamp.fromDate(_endDate!),
@@ -481,8 +492,10 @@ class _EventModifyScreenState extends State<EventModifyScreen> {
   @override
   void dispose() {
     _titleController.dispose();
-    _subtitleController.dispose();
+    // _subtitleController.dispose(); // Removed subtitle
     _contentController.dispose();
+    _locationController.dispose(); // Dispose location
+    _linkController.dispose();     // Dispose link
     super.dispose();
   }
-}// TODO Implement this library.
+}

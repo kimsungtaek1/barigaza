@@ -70,10 +70,16 @@ service cloud.firestore {
         let data = request.resource.data;
         return
           data.title is string &&
+          data.content is string && // Added content check
+          data.imageUrl is string && // Assuming imageUrl is required now, adjust if optional
+          data.startDate is timestamp &&
+          data.endDate is timestamp &&
           data.isActive is bool &&
-          data.createdAt is timestamp &&
-          (!data.keys().hasAny(['description']) || data.description is string) &&
-          (!data.keys().hasAny(['imageUrl']) || data.imageUrl is string);
+          (data.createdAt is timestamp || request.method == 'create') && // Allow createdAt on create
+          (!data.keys().hasAny(['updatedAt']) || data.updatedAt is timestamp) && // Allow updatedAt on update
+          (!data.keys().hasAny(['location']) || data.location is string || data.location == null) && // Allow location (string or null)
+          (!data.keys().hasAny(['link']) || data.link is string || data.link == null); // Allow link (string or null)
+          // Removed subtitle check
       }
 
       allow read: if true;
@@ -345,18 +351,23 @@ service cloud.firestore {
     match /posts/{postId} {
       function isValidPost() {
         let data = request.resource.data;
+        // 허용되는 카테고리 배열 정의
+        let validCategories = ['자유게시판', '바리·카페', '질문·답변', '공지사항'];
+        
         return
           data.userId is string &&
           data.title is string &&
           data.content is string &&
           data.category is string &&
+          data.category in validCategories && // 카테고리 유효성 검사 추가
           data.createdAt is timestamp &&
           (!data.keys().hasAny(['viewCount']) || data.viewCount is number);
       }
       
       // 게스트 사용자도 게시물 읽기 허용
       allow read: if true;
-      allow create: if isAuthenticated() && isValidPost();
+      allow create: if isAuthenticated() && isValidPost() && 
+                   (request.resource.data.category != '공지사항' || isAdminRole());
       allow update: if isAuthenticated() && 
                     (request.auth.uid == resource.data.userId || 
                      isAdminRole() || 

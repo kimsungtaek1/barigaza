@@ -13,14 +13,14 @@ class CommunityWriteScreen extends StatefulWidget {
 
 class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _selectedCategory = '자유주제';
+  String _selectedCategory = '자유게시판';
   String _title = '';
   String _content = '';
   String _link = '';
   File? _image;
   bool _isLoading = false;
 
-  final List<String> _categories = ['자유주제', '장비튜닝', '라이더뉴스'];
+  final List<String> _categories = ['자유게시판', '바리·카페', '질문·답변']; // 공지사항 제외
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();

@@ -161,25 +161,16 @@ class _AdminEventTabState extends State<AdminEventTab> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            if (event.subtitle.isNotEmpty) ...[
-                              SizedBox(height: 4),
-                              Text(
-                                event.subtitle,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                            // Removed subtitle display
                           ],
                         ),
                       ),
                       Switch(
                         value: event.isActive,
                         onChanged: (value) => _toggleEventStatus(event.id, value),
-                        activeColor: Color(0xFF1066FF),
+                        activeColor: Color(0xFF1066FF), // ON 색상을 파란색으로 변경
+                        inactiveTrackColor: Colors.grey[300], // OFF 트랙 색상을 회색으로 변경
+                        inactiveThumbColor: Colors.grey[500], // OFF 동그라미 색상을 회색으로 변경
                       ),
                     ],
                   ),

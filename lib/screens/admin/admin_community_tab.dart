@@ -347,7 +347,7 @@ class _PostDetailScreenState extends State<_PostDetailScreen> {
   List<DocumentSnapshot> _comments = [];
   bool _isLoadingComments = false;
 
-  final List<String> _categories = ['자유주제', '장비튜닝', '라이더뉴스'];
+  final List<String> _categories = ['자유게시판', '바리·카페', '질문·답변', '공지사항'];
 
   @override
   void initState() {
@@ -355,11 +355,11 @@ class _PostDetailScreenState extends State<_PostDetailScreen> {
     final data = widget.post.data() as Map<String, dynamic>;
     _titleController = TextEditingController(text: data['title'] ?? '');
     _contentController = TextEditingController(text: data['content'] ?? '');
-    _selectedCategory = data['category'] ?? '자유주제';
+    _selectedCategory = data['category'] ?? '자유게시판';
     _loadComments();
 
     if (!_categories.contains(_selectedCategory)) {
-      _selectedCategory = '자유주제';
+      _selectedCategory = '자유게시판';
     }
   }
 

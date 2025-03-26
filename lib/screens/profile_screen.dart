@@ -351,28 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ],
           ),
-          SizedBox(height: 20),
-          // 회원 탈퇴 버튼
-          InkWell(
-            onTap: _handleDeleteAccount,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.delete_forever, color: Colors.red[300], size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    '회원 탈퇴',
-                    style: TextStyle(
-                      color: Colors.red[300],
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // SizedBox(height: 20), // 회원 탈퇴 버튼 이동으로 인한 간격 조정 (필요시 제거 또는 수정)
         ],
       ),
     );
@@ -818,40 +797,41 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                          children: [
-                            Text(
-                              '참여중인 채팅방',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Spacer(),
-                            GestureDetector(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => ChatListScreen()),
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                child: const Row(
-                                  children: [
-                                    Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                                    SizedBox(width: 2),
-                                    Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8),
                         Expanded(
                           child: SingleChildScrollView(
                             physics: AlwaysScrollableScrollPhysics(),
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '참여중인 채팅방',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    GestureDetector(
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => ChatListScreen()),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        child: const Row(
+                                          children: [
+                                            Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                            SizedBox(width: 2),
+                                            Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8),
                                 Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 4),
                                   child: _buildMeetingsList(),
@@ -878,6 +858,29 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   padding: EdgeInsets.symmetric(horizontal: 4),
                                   child: _buildPostsList(),
                                 ),
+                                SizedBox(height: 32), // 게시글 목록과 탈퇴 버튼 사이 간격
+                                // 회원 탈퇴 버튼 (최하단으로 이동)
+                                InkWell(
+                                  onTap: _handleDeleteAccount,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(vertical: 16), // 상하 패딩 추가
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end, // 우측 정렬로 변경
+                                      children: [
+                                        Icon(Icons.delete_forever, color: Colors.red[300], size: 20),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          '회원 탈퇴',
+                                          style: TextStyle(
+                                            color: Colors.red[300],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 16), // 하단 여백
                               ],
                             ),
                           ),

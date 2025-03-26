@@ -340,6 +340,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 _buildEventSection(),
                 _buildLocationSection(),
+                const SizedBox(height: 50),
               ],
             ),
           ),
@@ -523,7 +524,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 );
               }).toList(),
             ),
-          )
+          ),
         ],
       ),
     );

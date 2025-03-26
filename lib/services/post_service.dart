@@ -232,15 +232,13 @@ class PostService {
         query = query.where('reportStatus', isNotEqualTo: 'blocked');
       }
 
-      if (category != '전체' && category != '탐색') {
-        if (category == '팔로잉') {
-          // '팔로잉'인 경우: createdAt 기준 정렬 및 제한
-          query = query.orderBy('createdAt', descending: true).limit(50);
-        } else {
-          // 디버깅을 위해 로그 추가
-          print('카테고리 필터링: $category');
-          query = query.where('category', isEqualTo: category);
-        }
+      if (category == '팔로잉') {
+        // '팔로잉'인 경우: createdAt 기준 정렬 및 제한
+        query = query.orderBy('createdAt', descending: true).limit(50);
+      } else if (category != '탐색') {
+        // '탐색'이 아닌 모든 카테고리: 카테고리 필터링 적용
+        print('카테고리 필터링: $category');
+        query = query.where('category', isEqualTo: category);
       }
 
       // 검색어가 있을 때 (단, '팔로잉'에서는 검색어 기능 사용 X)
@@ -253,7 +251,11 @@ class PostService {
         // 검색어가 없을 때: 정렬 옵션 적용 (이미 '팔로잉'일 경우엔 중복 orderBy 호출을 피함)
         if (category != '팔로잉') {
           switch (sortBy) {
-            case '신규':
+            case '추천순':
+              query = query.orderBy('likeCount', descending: true)
+                           .orderBy('createdAt', descending: true);
+              break;
+            case '최신순':
             default:
               query = query.orderBy('createdAt', descending: true);
               break;
@@ -315,6 +317,18 @@ class PostService {
     try {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return null;
+      
+      // 공지사항 카테고리는 관리자만 작성 가능
+      if (category == '공지사항') {
+        // 사용자 역할 확인
+        final userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
+        final userData = userDoc.data();
+        final userRole = userData?['role'] ?? '';
+        
+        if (userRole != 'admin' && userRole != 'master') {
+          return null; // 관리자가 아닌 경우 게시글 작성 거부
+        }
+      }
 
       // 콘텐츠 필터링 체크
       bool containsBannedWords = _contentFilter.containsBannedWords(title) || 
@@ -415,6 +429,20 @@ class PostService {
     String? link,
   }) async {
     try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return false;
+      
+      // 공지사항 카테고리는 관리자만 작성 가능
+      if (category == '공지사항') {
+        // 사용자 역할 확인
+        final userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
+        final userData = userDoc.data();
+        final userRole = userData?['role'] ?? '';
+        
+        if (userRole != 'admin' && userRole != 'master') {
+          return false; // 관리자가 아닌 경우 게시글 수정 거부
+        }
+      }
       // 콘텐츠 필터링 체크
       bool containsBannedWords = _contentFilter.containsBannedWords(title) || 
                                 _contentFilter.containsBannedWords(content);

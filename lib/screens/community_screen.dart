@@ -19,19 +19,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Timer? _debounceTimer;
 
   String _selectedCategory = '팔로잉';
-  String _selectedSort = '신규';
+  String _selectedSort = '최신순';
   String _searchQuery = '';
   bool _isSearching = false;
 
   final List<String> _categories = [
     '팔로잉',
     '탐색',
-    '전체',
-    '자유주제',
-    '장비튜닝',
-    '라이더뉴스'
+    '자유게시판',
+    '바리·카페',
+    '질문·답변',
+    '공지사항'
   ];
-  // 기본값은 '팔로잉'에서는 신규만 사용하므로 별도의 _sortOptions 변수 대신 동적으로 구성합니다.
+  
+  // 카테고리별로 사용 가능한 정렬 옵션을 맵으로 정의
+  final Map<String, List<String>> _categorySortOptions = {
+    '팔로잉': ['최신순'],
+    '탐색': ['최신순'],
+    '자유게시판': ['최신순', '추천순'],
+    '바리·카페': ['최신순', '추천순'],
+    '질문·답변': ['최신순', '추천순'],
+    '공지사항': ['최신순']
+  };
 
   @override
   void dispose() {
@@ -117,13 +126,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Widget _buildCategoryMenu() {
-    // _selectedCategory에 따라 정렬 옵션을 다르게 구성
-    List<String> sortOptions;
-    if (_selectedCategory == '탐색') {
-      sortOptions = ['추천순', '조회순', '신규'];
-    } else {
-      sortOptions = ['신규'];
-    }
+    // 선택된 카테고리에 맞는 정렬 옵션 가져오기
+    List<String> sortOptions = _categorySortOptions[_selectedCategory] ?? ['최신순'];
 
     return Container(
       height: 60, // 전체 높이 증가
@@ -189,12 +193,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     _selectedCategory = category;
                     _searchQuery = '';
                     _searchController.clear();
-                    // 카테고리 변경 시 정렬 옵션도 업데이트 (탐색은 3개, 나머지는 신규만)
-                    if (_selectedCategory == '탐색') {
-                      _selectedSort = '추천순'; // 탐색 카테고리 기본값
-                    } else {
-                      _selectedSort = '신규';
-                    }
+                    // 카테고리 변경 시 정렬 옵션도 업데이트
+                    final sortOptions = _categorySortOptions[category] ?? ['최신순'];
+                    _selectedSort = sortOptions.first; // 각 카테고리의 첫 번째 정렬 옵션을 기본값으로 설정
                   }),
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 20),
@@ -287,13 +288,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Widget _buildSortOptions() {
-    // _selectedCategory에 따라 정렬 옵션을 다르게 구성
-    List<String> sortOptions;
-    if (_selectedCategory == '탐색') {
-      sortOptions = ['추천순', '조회순', '신규'];
-    } else {
-      sortOptions = ['신규'];
-    }
+    // 선택된 카테고리에 맞는 정렬 옵션 가져오기
+    List<String> sortOptions = _categorySortOptions[_selectedCategory] ?? ['최신순'];
     return Container(
       height: 40,
       padding: EdgeInsets.symmetric(horizontal: 16),
