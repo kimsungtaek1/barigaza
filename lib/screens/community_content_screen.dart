@@ -623,7 +623,9 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
                   ],
                 ),
               ),
-              if (!isMyPost && currentUserId != null)
+              if (!isMyPost && currentUserId != null && 
+                  postData['category'] != '공지사항' && 
+                  postData['category'] != 'Q&A')
                 IconButton(
                   icon: Icon(Icons.person_add, color: Colors.blue, size: 20),
                   onPressed: () => _sendFriendRequest(

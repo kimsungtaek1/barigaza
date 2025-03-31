@@ -444,10 +444,10 @@ service cloud.firestore {
         // 댓글 읽기 권한 설정
         allow read: if 
           // 질문답변 카테고리의 경우 작성자와 관리자만 읽기 가능
-          (resource.data.category == '질문·답변' && 
+          (get(/databases/$(database)/documents/posts/$(postId)).data.category == '질문·답변' && 
            (request.auth.uid == resource.data.userId || isAdminRole())) ||
           // 다른 카테고리는 모두 읽기 가능
-          (resource.data.category != '질문·답변');
+          (get(/databases/$(database)/documents/posts/$(postId)).data.category != '질문·답변');
         
         // 댓글 쓰기 권한 설정
         allow create: if isAuthenticated() && 
