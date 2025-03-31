@@ -178,27 +178,73 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               _isShowingParticipants = !_isShowingParticipants;
             });
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.otherUserNickname,
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              StreamBuilder<List<Map<String, dynamic>>>(
-                stream: _chatService.getParticipants(widget.chatId),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return SizedBox();
-                  return Text(
-                    '참여자 ${snapshot.data!.length}명',
-                    style: TextStyle(fontSize: 12),
-                  );
-                },
-              ),
-            ],
+          child: StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('chatRooms')
+                .doc(widget.chatId)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.otherUserNickname,
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(),
+                  ],
+                );
+              }
+              
+              final chatData = snapshot.data!.data() as Map<String, dynamic>?;
+              if (chatData == null) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.otherUserNickname,
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(),
+                  ],
+                );
+              }
+              
+              final isGroupChat = chatData['isGroupChat'] ?? false;
+              final title = isGroupChat 
+                  ? chatData['groupName'] ?? widget.otherUserNickname
+                  : widget.otherUserNickname;
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: _chatService.getParticipants(widget.chatId),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return SizedBox();
+                      return Text(
+                        '참여자 ${snapshot.data!.length}명',
+                        style: TextStyle(fontSize: 12),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
           ),
         ),
         centerTitle: false,
