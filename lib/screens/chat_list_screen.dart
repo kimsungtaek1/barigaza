@@ -274,10 +274,41 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
           return const Center(child: Text('채팅 내역이 없습니다'));
         }
 
+        // Filter chats based on search query
+        final filteredChats = chats.where((chat) {
+          final chatData = chat.data() as Map<String, dynamic>;
+          final isGroupChat = chatData['isGroupChat'] ?? false;
+          String chatTitle;
+
+          if (isGroupChat) {
+            chatTitle = chatData['groupName'] ?? '';
+          } else {
+            final users = (chatData['users'] as List?)?.map((e) => e.toString()).toList() ?? [];
+            if (users.isEmpty) return false;
+            final otherUserId = users.firstWhere((id) => id != currentUserId, orElse: () => '');
+            if (otherUserId.isEmpty) return false;
+            final userDetails = chatData['userDetails'] as Map<String, dynamic>?;
+            if (userDetails == null) return false;
+            final otherUserDetail = userDetails[otherUserId] as Map<String, dynamic>?;
+            if (otherUserDetail == null) return false;
+            chatTitle = otherUserDetail['nickname'] as String? ?? '';
+          }
+
+          return _searchQuery.isEmpty || chatTitle.toLowerCase().contains(_searchQuery);
+        }).toList();
+
+        if (filteredChats.isEmpty && _searchQuery.isNotEmpty) {
+          return Center(child: Text('\'$_searchQuery\'에 대한 검색 결과가 없습니다.'));
+        } else if (filteredChats.isEmpty) {
+          return const Center(child: Text('채팅 내역이 없습니다'));
+        }
+
+
         return ListView.builder(
-          itemCount: chats.length,
+          itemCount: filteredChats.length, // Use filtered list length
           itemBuilder: (context, index) {
-            final chatData = chats[index].data() as Map<String, dynamic>;
+            final chatDoc = filteredChats[index]; // Use filtered list item
+            final chatData = chatDoc.data() as Map<String, dynamic>;
             final isGroupChat = chatData['isGroupChat'] ?? false;
             String chatTitle;
             String? chatImage;
@@ -306,8 +337,11 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
               chatImage = otherUserDetail['profileImage'] as String?;
             }
 
+            // The filtering logic is now outside the item builder
+            // No need for an additional check here
+
             return Dismissible(
-              key: Key(chats[index].id),
+              key: Key(chatDoc.id), // Use chatDoc.id
               background: Container(
                 color: Colors.red,
                 alignment: Alignment.centerRight,
@@ -334,7 +368,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                 );
               },
               onDismissed: (direction) async {
-                await _chatService.leaveChatRoom(chats[index].id);
+                await _chatService.leaveChatRoom(chatDoc.id); // Use chatDoc.id
               },
               child: ListTile(
                 leading: CircleAvatar(
@@ -376,7 +410,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                     ),
                     const SizedBox(height: 4),
                     StreamBuilder<int>(
-                      stream: _chatService.getUnreadMessageCount(chats[index].id),
+                      stream: _chatService.getUnreadMessageCount(chatDoc.id), // Use chatDoc.id
                       builder: (context, snapshot) {
                         if (!snapshot.hasData || snapshot.data == 0) {
                           return const SizedBox.shrink();
@@ -407,7 +441,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                     context,
                     MaterialPageRoute(
                       builder: (context) => ChatRoomScreen(
-                        chatId: chats[index].id,
+                        chatId: chatDoc.id, // Use chatDoc.id
                         otherUserNickname: chatTitle,
                       ),
                     ),

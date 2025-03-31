@@ -69,10 +69,14 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
 
       if (image == null) return;
 
-      setState(() {
-        _isLoading = true;
-        _tempBikeImage = image.path;
-      });
+      if (mounted) { // Add mounted check
+        setState(() {
+          _isLoading = true;
+          _tempBikeImage = image.path;
+        });
+      } else {
+        return; // Exit if not mounted
+      }
 
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('사용자 인증 정보가 없습니다.');
@@ -114,8 +118,8 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
       }
     } catch (e) {
       print('차량 이미지 업데이트 실패: $e');
-      setState(() => _isLoading = false);
-      if (mounted) {
+      if (mounted) { // Add mounted check
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('이미지 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.')),
@@ -130,10 +134,14 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
         _loadUserData(),
         _loadMaintenancePeriods(),
       ]);
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     } catch (e) {
       print('Error loading data: $e');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -142,7 +150,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final doc = await _firestore.collection('users').doc(user.uid).get();
-        if (doc.exists) {
+        if (doc.exists && mounted) { // Add mounted check here
           setState(() {
             _userData = doc.data() as Map<String, dynamic>;
           });
@@ -520,7 +528,9 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
 
                                   if (result == true) {
                                     await _loadData();
-                                    setState(() {});
+                                    if (mounted) { // Add mounted check
+                                      setState(() {});
+                                    }
                                   }
                                 }
                               } catch (e) {
@@ -585,7 +595,9 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                         final result = await Navigator.pushNamed(context, '/fuel-record');
                         if (result == true) {
                           await _loadData();
-                          setState(() {});
+                          if (mounted) { // Add mounted check
+                            setState(() {});
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -936,8 +948,10 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                 });
 
                 Navigator.pop(context);
-                setState(() {}); // 상태 갱신을 위해 추가
-                await _loadMaintenancePeriods();
+                if (mounted) { // Add mounted check
+                  setState(() {}); // 상태 갱신을 위해 추가
+                }
+                await _loadMaintenancePeriods(); // This already checks mounted internally
 
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
