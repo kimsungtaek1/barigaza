@@ -11,6 +11,7 @@ import '../screens/fuel_record_screen.dart';
 import '../services/maintenance_service.dart';
 import '../services/maintenance_tracking_service.dart';
 import '../services/storage_service.dart';
+import '../utils/manufacturer_names.dart'; // Add this import
 
 class MyVehicleTab extends StatefulWidget {
   @override
@@ -24,6 +25,8 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
   Map<String, dynamic> _userData = {};
   Map<String, MaintenancePeriod> _maintenancePeriods = {};
   String? _tempBikeImage;
+
+  // Remove the local map definition
 
   @override
   void initState() {
@@ -294,20 +297,20 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
       for (var doc in records.docs) {
         final data = doc.data();
         final timestamp = data['date'] as Timestamp;
-        
+
         // 추가 주행거리와 주유량을 사용하여 연비(km/L) 계산
         final distance = data['distance'] is int
-          ? (data['distance'] as int).toDouble()
-          : data['distance'] as double;
-        
+            ? (data['distance'] as int).toDouble()
+            : data['distance'] as double;
+
         final amount = data['amount'] is int
-          ? (data['amount'] as int).toDouble()
-          : data['amount'] as double;
-        
-        final fuelEfficiency = distance > 0 && amount > 0 
-          ? distance / amount 
-          : 0.0;
-          
+            ? (data['amount'] as int).toDouble()
+            : data['amount'] as double;
+
+        final fuelEfficiency = distance > 0 && amount > 0
+            ? distance / amount
+            : 0.0;
+
         fuelRecords.add({
           'date': timestamp.toDate().toIso8601String(),
           'amount': data['amount'],
@@ -335,12 +338,35 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '[${_userData['bikeManufacturer'] ?? '제조사 미등록'}] ${_userData['bikeName'] ?? '차량 미등록'}',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Builder( // Builder 위젯을 사용하여 context 접근 및 로직 처리
+                    builder: (context) {
+                      final manufacturerId = _userData['bikeManufacturer']?.toString().toLowerCase();
+                      String manufacturerDisplayName = '제조사 미등록'; // 기본값
+
+                      if (manufacturerId != null) {
+                        // Use the imported map
+                        final manufacturerInfo = manufacturerNameMap[manufacturerId];
+                        if (manufacturerInfo != null) {
+                          final engName = manufacturerInfo['eng'];
+                          final korName = manufacturerInfo['kor'];
+                          // 영어 이름 우선 사용, 없으면 한글 이름, 그것도 없으면 ID 사용
+                          manufacturerDisplayName = (engName != null && engName.isNotEmpty)
+                              ? engName
+                              : (korName ?? manufacturerId);
+                        } else {
+                          // 맵에 없는 경우 ID 그대로 사용 (혹은 다른 기본값 설정 가능)
+                          manufacturerDisplayName = manufacturerId;
+                        }
+                      }
+
+                      return Text(
+                        '$manufacturerDisplayName ${_userData['bikeName'] ?? '차량 미등록'}',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }
                   ),
                   SizedBox(height: 8),
                   Row(
@@ -414,7 +440,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                     Text(
                       '최근 주유 기록',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
@@ -425,7 +451,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                         return Text(
                           '평균연비: ${(snapshot.data ?? 0.0).toStringAsFixed(1)} km/L',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -441,7 +467,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(child: CircularProgressIndicator());
                     }
-                    
+
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return Card(
                         color: Colors.white,
@@ -453,27 +479,27 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                         ),
                       );
                     }
-                    
+
                     return Container(
                       height: snapshot.data!.length > 2 ? 200 : null,
                       child: ListView.builder(
                         shrinkWrap: true,
-                        physics: snapshot.data!.length > 2 
-                          ? AlwaysScrollableScrollPhysics() 
-                          : NeverScrollableScrollPhysics(),
+                        physics: snapshot.data!.length > 2
+                            ? AlwaysScrollableScrollPhysics()
+                            : NeverScrollableScrollPhysics(),
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
                           final record = snapshot.data![index];
                           final date = DateTime.parse(record['date']);
                           final formattedDate = '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
-                          
+
                           return GestureDetector(
                             onTap: () async {
                               try {
                                 // 해당 레코드의 ID 가져오기
                                 final user = FirebaseAuth.instance.currentUser;
                                 if (user == null) return;
-                                
+
                                 final querySnapshot = await _firestore
                                     .collection('users')
                                     .doc(user.uid)
@@ -481,17 +507,17 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                                     .orderBy('date', descending: true)
                                     .limit(5)
                                     .get();
-                                
+
                                 if (index < querySnapshot.docs.length) {
                                   final recordId = querySnapshot.docs[index].id;
-                                  
+
                                   final result = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => FuelRecordScreen(recordId: recordId),
                                     ),
                                   );
-                                  
+
                                   if (result == true) {
                                     await _loadData();
                                     setState(() {});

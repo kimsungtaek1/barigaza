@@ -1,0 +1,2 @@
+C:/Users/khs/StudioProjects/barigaza/android/app/.cxx/RelWithDebInfo/636t3a4s/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/khs/StudioProjects/barigaza/android/app/.cxx/RelWithDebInfo/636t3a4s/x86_64/CMakeFiles/rebuild_cache.dir
