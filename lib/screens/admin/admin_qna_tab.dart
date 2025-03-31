@@ -830,14 +830,8 @@ class _QnaWriteScreenState extends State<_QnaWriteScreen> {
         if (user == null) throw Exception('사용자 인증 정보가 없습니다');
 
         final bytes = await _imageFile!.readAsBytes();
-        final String fileExtension = _imageFile!
-            .path
-            .split('.')
-            .last
-            .toLowerCase();
-        final String fileName = 'qna_${DateTime
-            .now()
-            .millisecondsSinceEpoch}.$fileExtension';
+        final String fileExtension = _imageFile!.path.split('.').last.toLowerCase();
+        final String fileName = 'qna_${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
         final String storagePath = 'post_images/$fileName';
 
         final storageService = StorageService();
@@ -940,22 +934,20 @@ class _QnaWriteScreenState extends State<_QnaWriteScreen> {
                   TextButton.icon(
                     onPressed: () => setState(() => _imageFile = null),
                     icon: const Icon(Icons.delete, color: Colors.red),
-                    label: const Text(
-                        '이미지 삭제', style: TextStyle(color: Colors.red)),
+                    label: const Text('이미지 삭제', style: TextStyle(color: Colors.red)),
                   ),
                   const SizedBox(height: 8),
-                ] else
-                  ...[
-                    ElevatedButton.icon(
-                      onPressed: _pickImage,
-                      icon: const Icon(Icons.image),
-                      label: const Text('이미지 추가'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
+                ] else ...[
+                  ElevatedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.image),
+                    label: const Text('이미지 추가'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
                     ),
-                    const SizedBox(height: 16),
-                  ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 TextFormField(
                   controller: _contentController,
                   decoration: const InputDecoration(
@@ -980,76 +972,76 @@ class _QnaWriteScreenState extends State<_QnaWriteScreen> {
   }
 
   Future<void> _createPost() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('로그인이 필요합니다')),
-        );
-        return;
-      }
-
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      final userData = userDoc.data() ?? {};
-      final userNickname = userData['nickname'] ?? '관리자';
-
-      // 이미지 업로드
-      String? imageUrl;
-      if (_imageFile != null) {
-        imageUrl = await _uploadImage();
-      }
-
-      await FirebaseFirestore.instance.collection('posts').add({
-        'title': _titleController.text,
-        'content': _contentController.text,
-        'category': '질문·답변',
-        'userId': user.uid,
-        'nickname': userNickname,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'viewCount': 0,
-        'likeCount': 0,
-        'imageUrl': imageUrl ?? '',
-        'link': '',
-        'reportStatus': '',
-        'isReported': false,
-        'reportCount': 0,
-      });
-
-      widget.onPostCreated();
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('질문답변이 등록되었습니다')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('질문답변 등록 중 오류가 발생했습니다: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() => _isLoading = false);
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다')),
+      );
+      return;
     }
-  }
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _contentController.dispose();
-    super.dispose();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    final userData = userDoc.data() ?? {};
+    final userNickname = userData['nickname'] ?? '관리자';
+
+    // 이미지 업로드
+    String? imageUrl;
+    if (_imageFile != null) {
+      imageUrl = await _uploadImage();
+    }
+
+    await FirebaseFirestore.instance.collection('posts').add({
+      'title': _titleController.text,
+      'content': _contentController.text,
+      'category': '질문·답변',
+      'userId': user.uid,
+      'nickname': userNickname,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'viewCount': 0,
+      'likeCount': 0,
+      'imageUrl': imageUrl ?? '',
+      'link': '',
+      'reportStatus': '',
+      'isReported': false,
+      'reportCount': 0,
+    });
+
+    widget.onPostCreated();
+
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('질문답변이 등록되었습니다')),
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('질문답변 등록 중 오류가 발생했습니다: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
+
+@override
+void dispose() {
+  _titleController.dispose();
+  _contentController.dispose();
+  super.dispose();
+}
 }

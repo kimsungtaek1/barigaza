@@ -352,7 +352,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   Widget _buildEventSection() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(8),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16),

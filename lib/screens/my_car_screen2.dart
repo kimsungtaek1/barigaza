@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/ad_banner_widget.dart';
 import '../services/car_model_service.dart';
 import '../models/car_model.dart';
+import '../utils/manufacturer_names.dart';
 import 'my_car_screen3.dart';
 import 'my_car_screen_direct.dart';
 
@@ -20,109 +21,33 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
   final CarModelService _carModelService = CarModelService();
   bool _isLoading = true;
   List<CarManufacturer> _manufacturers = [];
-  Map<String, String> _logoMap = {
-    'honda': 'honda_logo.png',
-    'yamaha': 'yamaha_logo.png',
-    'suzuki': 'suzuki_logo.png',
-    'kawasaki': 'kawasaki_logo.png',
-    'bmw': 'bmw_logo.png',
-    'ducati': 'ducati_logo.png',
-    'triumph': 'triumph_logo.png',
-    'ktm': 'ktm_logo.png',
-    'royal_enfield': 'royal_enfield_logo.png',
-    'vespa': 'vespa_logo.png',
-  };
-  
-  // 제조사 이름 매핑 - 한글명과 영문명
-  Map<String, Map<String, String>> _manufacturerNameMap = {
-    'honda': {'kor': '혼다', 'eng': 'Honda'},
-    'yamaha': {'kor': '야마하', 'eng': 'Yamaha'},
-    'suzuki': {'kor': '스즈키', 'eng': 'Suzuki'},
-    'kawasaki': {'kor': '가와사키', 'eng': 'Kawasaki'},
-    'bmw': {'kor': 'BMW Motorrad', 'eng': ''},
-    'ducati': {'kor': '두카티', 'eng': 'Ducati'},
-    'triumph': {'kor': '트라이엄프', 'eng': 'Triumph'},
-    'ktm': {'kor': 'KTM', 'eng': ''},
-    'royal_enfield': {'kor': '로얄 엔필드', 'eng': 'Royal Enfield'},
-    'vespa': {'kor': '베스파', 'eng': 'Vespa'},
-  };
 
   @override
   void initState() {
     super.initState();
     _loadManufacturers();
   }
-
-  Future<void> _loadManufacturers() async {
+  
+  void _loadManufacturers() {
     setState(() {
       _isLoading = true;
     });
     
-    try {
-      // Firestore에서 데이터 불러오기
-      final allManufacturers = await _carModelService.getManufacturers();
-      
-      // Firestore에 데이터가 없으면 JSON에서 마이그레이션
-      if (allManufacturers.isEmpty) {
-        await _migrateDataFromJson();
-        final updatedManufacturers = await _carModelService.getManufacturers();
-        
-        // _logoMap에 있는 제조사만 필터링
-        final filteredManufacturers = updatedManufacturers.where((manufacturer) => 
-          _logoMap.containsKey(manufacturer.id.toLowerCase())).toList();
-        
-        setState(() {
-          _manufacturers = filteredManufacturers;
-          _isLoading = false;
-        });
-      } else {
-        // _logoMap에 있는 제조사만 필터링
-        final filteredManufacturers = allManufacturers.where((manufacturer) => 
-          _logoMap.containsKey(manufacturer.id.toLowerCase())).toList();
-        
-        setState(() {
-          _manufacturers = filteredManufacturers;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading manufacturers: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-  
-  Future<void> _migrateDataFromJson() async {
-    try {
-      // Firestore에서 제조사 목록 가져오기
-      final firestore = FirebaseFirestore.instance;
-      final manufacturersSnapshot = await firestore.collection('car_manufacturers').get();
-      
-      if (manufacturersSnapshot.docs.isEmpty) {
-        print('No manufacturers found in Firestore');
-        return;
-      }
-      
-      // 제조사와 모델 매핑 구성
-      final Map<String, List<Map<String, dynamic>>> data = {};
-      
-      // 각 제조사에 대한 데이터 구성
-      for (final doc in manufacturersSnapshot.docs) {
-        final manufacturer = doc.data();
-        final manufacturerName = manufacturer['name'];
-        
-        // 초기에는 모든 제조사에 대해 빈 모델 리스트 설정
-        data[manufacturerName] = [];
-      }
-      
-      // 마이그레이션 수행
-      if (data.isNotEmpty) {
-        await _carModelService.migrateFromJson(data);
-      }
-    } catch (e) {
-      print('Error migrating data: $e');
-    }
+    // manufacturer_names.dart에서 제조사 목록 가져오기
+    final List<CarManufacturer> manufacturers = [];
+    
+    // manufacturerNameMap의 각 키(제조사 ID)와 값(제조사 정보)을 순회
+    manufacturerNameMap.forEach((id, info) {
+      manufacturers.add(CarManufacturer(
+        id: id,
+        name: info['kor'] ?? id, // 한글 이름 사용, 없으면 ID 사용
+      ));
+    });
+    
+    setState(() {
+      _manufacturers = manufacturers;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -208,7 +133,7 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
                                 );
                               } else {
                                 final manufacturer = _manufacturers[index];
-                                final logoFile = _logoMap[manufacturer.id.toLowerCase()] ?? 'brg_logo.png';
+                                final logoFile = manufacturerNameMap[manufacturer.id.toLowerCase()]?['logo'] ?? 'brg_logo.png';
                                 
                                 return _buildManufacturerButton(
                                   context,
@@ -230,7 +155,7 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
 
   Widget _buildManufacturerButton(BuildContext context, String name, String id, String logoPath) {
     // 매핑된 제조사 이름이 있으면 사용하고, 없으면 기존 이름 사용
-    final manufacturerInfo = _manufacturerNameMap[id.toLowerCase()];
+    final manufacturerInfo = manufacturerNameMap[id.toLowerCase()];
     final korName = manufacturerInfo?['kor'] ?? name;
     final engName = manufacturerInfo?['eng'] ?? '';
     
