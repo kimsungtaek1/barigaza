@@ -45,25 +45,6 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
     }
   }
 
-  Future<void> _createGroupChat() async {
-    try {
-      final chatId = await _chatService.createGroupChatRoom(
-        [widget.meeting.hostId],
-        '${widget.meeting.hostName}님의 바리',
-        meetingId: widget.meeting.id,
-      );
-
-      await FirebaseFirestore.instance
-          .collection('meetings')
-          .doc(widget.meeting.id)
-          .update({
-        'chatRoomId': chatId,
-      });
-    } catch (e) {
-      print('Error creating group chat: $e');
-    }
-  }
-
   Future<void> _requestJoinMeeting() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {

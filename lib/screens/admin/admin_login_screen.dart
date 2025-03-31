@@ -12,8 +12,8 @@ class AdminLoginScreen extends StatefulWidget {
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _idController = TextEditingController(text: 'kstbook@naver.com');
-  final _passwordController = TextEditingController(text: 'korea3');
+  final _idController = TextEditingController(text: '');
+  final _passwordController = TextEditingController(text: '');
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _saveId = false;
