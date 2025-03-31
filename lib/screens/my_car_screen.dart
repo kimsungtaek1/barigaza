@@ -58,7 +58,7 @@ class _MyCarScreenState extends State<MyCarScreen> {
               child: ElevatedButton(
                 onPressed: _navigateToNextScreen,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF746B5D),
+                  backgroundColor: Theme.of(context).primaryColor, // Primary color로 변경
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

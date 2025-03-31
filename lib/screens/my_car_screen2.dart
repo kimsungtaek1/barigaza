@@ -162,19 +162,31 @@ class _MyCarScreen2State extends State<MyCarScreen2> {
                 : Expanded(
                     child: _manufacturers.isEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('등록된 차량 제조사가 없습니다.'),
-                                SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _loadManufacturers,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF746B5D),
+                            // 새로고침 버튼 레이아웃 및 스타일 수정
+                            child: Padding( // 좌우 패딩 추가
+                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('등록된 차량 제조사가 없습니다.'),
+                                  SizedBox(height: 16),
+                                  SizedBox( // 버튼 너비 전체로 확장
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: _loadManufacturers,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(context).primaryColor, // Primary color로 변경
+                                        foregroundColor: Colors.white, // 텍스트 색상 흰색으로
+                                        padding: const EdgeInsets.symmetric(vertical: 15), // 다른 버튼과 패딩 맞춤
+                                        shape: RoundedRectangleBorder( // 다른 버튼과 모양 맞춤
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: Text('새로고침'),
+                                    ),
                                   ),
-                                  child: Text('새로고침'),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           )
                         : GridView.builder(

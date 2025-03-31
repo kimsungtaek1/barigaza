@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../services/chat_service.dart';
 import '../services/storage_service.dart';
 import '../services/content_filter_service.dart';
+import '../services/friend_service.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final String chatId;
@@ -32,6 +33,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final currentUser = FirebaseAuth.instance.currentUser;
   final ChatService _chatService = ChatService();
   final ContentFilterService _contentFilterService = ContentFilterService();
+  final FriendService _friendService = FriendService();
   bool _isComposing = false;
   bool _isShowingParticipants = false;
   bool _isLoading = false;
@@ -214,6 +216,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             icon: Icon(Icons.more_vert),
             itemBuilder: (context) => [
               PopupMenuItem(
+                value: 'participants',
+                child: Text('참여자 목록'),
+              ),
+              PopupMenuItem(
                 value: 'leave',
                 child: Text('채팅방 나가기'),
               ),
@@ -223,7 +229,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ],
             onSelected: (value) async {
-              if (value == 'leave') {
+              if (value == 'participants') {
+                setState(() {
+                  _isShowingParticipants = !_isShowingParticipants;
+                });
+              } else if (value == 'leave') {
                 final result = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
@@ -379,7 +389,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Widget _buildParticipantsList() {
     return Container(
-      height: 100,
+      height: 120,
       decoration: BoxDecoration(
         color: Colors.grey[100],
         border: Border(
@@ -394,34 +404,62 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           }
 
           final participants = snapshot.data!;
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+          
+          // 참여자 목록 정렬: 현재 사용자를 맨 앞으로, 나머지는 닉네임 순
+          participants.sort((a, b) {
+            final isACurrentUser = a['userId'] == currentUserId;
+            final isBCurrentUser = b['userId'] == currentUserId;
+            
+            if (isACurrentUser && !isBCurrentUser) return -1;
+            if (!isACurrentUser && isBCurrentUser) return 1;
+            
+            return (a['nickname'] as String).compareTo(b['nickname'] as String);
+          });
 
           return ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: participants.length,
             itemBuilder: (context, index) {
               final user = participants[index];
+              final userId = user['userId'] as String;
+              final isCurrentUser = userId == currentUserId;
+              
               return Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundImage: user['profileImage'] != null
-                          ? NetworkImage(user['profileImage'])
-                          : null,
-                      child: user['profileImage'] == null
-                          ? Text(
-                        user['nickname'][0],
-                        style: TextStyle(fontSize: 20),
-                      )
-                          : null,
+                    GestureDetector(
+                      onTap: !isCurrentUser ? () => _showUserProfileDialog(userId, user['nickname'], user['profileImage']) : null,
+                      child: CircleAvatar(
+                        radius: 24,
+                        backgroundImage: user['profileImage'] != null
+                            ? NetworkImage(user['profileImage'])
+                            : null,
+                        child: user['profileImage'] == null
+                            ? Text(
+                          user['nickname'][0],
+                          style: TextStyle(fontSize: 20),
+                        )
+                            : null,
+                      ),
                     ),
                     SizedBox(height: 4),
-                    Text(
-                      user['nickname'],
-                      style: TextStyle(fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          user['nickname'],
+                          style: TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (isCurrentUser)
+                          Text(
+                            ' (나)',
+                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -431,6 +469,114 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         },
       ),
     );
+  }
+  
+  // 사용자 프로필 다이얼로그 표시
+  void _showUserProfileDialog(String userId, String nickname, String? profileImage) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: profileImage != null ? NetworkImage(profileImage) : null,
+                    child: profileImage == null ? Icon(Icons.person, size: 40) : null,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    nickname,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                _addFriend(userId, nickname);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.grey[300]!)),
+                ),
+                child: Center(
+                  child: Text(
+                    '친구 추가',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                _showBlockUserDialog(userId, nickname);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.grey[300]!)),
+                ),
+                child: Center(
+                  child: Text(
+                    '차단하기',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // 친구 추가 메서드
+  Future<void> _addFriend(String userId, String nickname) async {
+    try {
+      final success = await _friendService.sendFriendRequest(userId);
+      
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$nickname님을 친구로 추가했습니다 (카카오톡 방식: 단방향 추가)')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('이미 친구입니다')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('친구 추가에 실패했습니다: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildTextMessage(Map<String, dynamic> message, bool isMe) {

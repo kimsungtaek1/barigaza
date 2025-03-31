@@ -8,10 +8,11 @@ import 'package:image_picker/image_picker.dart';
 import '../models/maintenance_period.dart';
 import '../models/maintenance_record.dart';
 import '../screens/fuel_record_screen.dart';
+import '../screens/home_screen.dart';
 import '../services/maintenance_service.dart';
 import '../services/maintenance_tracking_service.dart';
 import '../services/storage_service.dart';
-import '../utils/manufacturer_names.dart'; // Add this import
+import '../utils/manufacturer_names.dart';
 
 class MyVehicleTab extends StatefulWidget {
   @override
@@ -635,8 +636,115 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
         ),
         SizedBox(height: 12),
         _buildMaintenanceItems(),
+        SizedBox(height: 32), // 부품 목록과 삭제 버튼 사이 간격
+        // 차량 삭제 버튼 추가
+        InkWell(
+          onTap: _handleDeleteVehicle,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 16), // 상하 패딩 추가
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end, // 우측 정렬
+              children: [
+                Icon(Icons.delete_outline, color: Colors.red[400], size: 20), // 아이콘 변경 및 색상 조정
+                SizedBox(width: 8),
+                Text(
+                  '차량 삭제',
+                  style: TextStyle(
+                    color: Colors.red[400], // 색상 조정
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 16), // 하단 여백
       ],
     );
+  }
+
+  // 차량 삭제 처리 함수 추가
+  Future<void> _handleDeleteVehicle() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('차량 삭제 확인'),
+        content: Text('정말로 차량 정보를 삭제하시겠습니까? 이 작업은 복구할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('삭제', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('로그인이 필요합니다.');
+
+      final userId = user.uid;
+      final userDocRef = _firestore.collection('users').doc(userId);
+      final batch = _firestore.batch();
+
+      // 1. users 문서에서 차량 관련 필드 삭제
+      batch.update(userDocRef, {
+        'bikeManufacturer': FieldValue.delete(),
+        'bikeName': FieldValue.delete(),
+        'bikeImage': FieldValue.delete(),
+        'currentMileage': FieldValue.delete(),
+        'lastMaintenance': FieldValue.delete(),
+        'hasBikeInfo': false, // hasBikeInfo 필드를 false로 업데이트 추가
+        // 필요에 따라 다른 차량 관련 필드도 추가
+      });
+
+      // 2. maintenance_periods 하위 컬렉션 삭제
+      final maintenancePeriodsSnapshot = await userDocRef.collection('maintenance_periods').get();
+      for (var doc in maintenancePeriodsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 3. fuel_records 하위 컬렉션 삭제
+      final fuelRecordsSnapshot = await userDocRef.collection('fuel_records').get();
+      for (var doc in fuelRecordsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 4. Batch 작업 실행
+      await batch.commit();
+
+      // 5. 로컬 데이터 초기화 및 UI 갱신
+      // await _loadUserData(); // 삭제 후에는 데이터를 다시 로드할 필요 없음
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('차량 정보가 삭제되었습니다.')),
+        );
+        // HomeScreen의 '내 차' 탭(인덱스 2)으로 이동하고 이전 경로 모두 제거
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen(initialIndex: 2)), // HomeScreen으로 이동하고 initialIndex 2 설정
+          (Route<dynamic> route) => false, // 모든 이전 라우트 제거
+        );
+      }
+
+    } catch (e) {
+      print('차량 삭제 실패: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('차량 정보 삭제에 실패했습니다: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   Widget _buildMaintenanceItems() {

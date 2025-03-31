@@ -84,7 +84,7 @@ class ChatService {
 
     await _firestore.collection('chatRooms').doc(chatRoomId).set({
       'users': participantIds,
-      'groupName': meetingId,  // 수정된 그룹명 사용
+      'groupName': groupName,  // 그룹명을 meetingId가 아닌 groupName으로 사용
       'createdAt': Timestamp.now(),
       'lastMessage': '',
       'lastMessageTime': Timestamp.now(),
@@ -305,7 +305,7 @@ class ChatService {
           .map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return {
-          'id': doc.id,
+          'userId': doc.id,
           'nickname': data['nickname'] ?? '알 수 없음',
           'profileImage': data['profileImage'],
         };

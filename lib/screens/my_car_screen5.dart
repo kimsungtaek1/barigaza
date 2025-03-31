@@ -32,16 +32,16 @@ class _MyCarScreen5State extends State<MyCarScreen5> {
     _mileageController.dispose();
     super.dispose();
   }
-  
+
   // Helper method to get display name
   String _getManufacturerDisplayName(String manufacturerId) {
     // Use the imported map
     final manufacturerInfo = manufacturerNameMap[manufacturerId.toLowerCase()];
     if (manufacturerInfo == null) return manufacturerId;
-    
+
     final korName = manufacturerInfo['kor'] ?? '';
     final engName = manufacturerInfo['eng'] ?? '';
-    
+
     if (engName.isEmpty) return korName;
     return '$korName($engName)';
   }
@@ -113,7 +113,7 @@ class _MyCarScreen5State extends State<MyCarScreen5> {
           MaterialPageRoute(
             builder: (context) => const HomeScreen(initialIndex: 2),
           ),
-          (route) => false,
+              (route) => false,
         );
       }
     } catch (e) {
@@ -227,10 +227,18 @@ class _MyCarScreen5State extends State<MyCarScreen5> {
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                   ],
-                  decoration: const InputDecoration(
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: '현재 주행거리 입력 (km)',
                     suffixText: 'km',
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                    fillColor: Colors.grey[100],
+                    filled: true,
                   ),
                 ),
               ),
@@ -240,7 +248,7 @@ class _MyCarScreen5State extends State<MyCarScreen5> {
                 child: ElevatedButton(
                   onPressed: _saveBikeInfo,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF746B5D),
+                    backgroundColor: Theme.of(context).primaryColor, // Primary color로 변경
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(

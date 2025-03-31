@@ -6,6 +6,7 @@ import '../models/meeting_point.dart';
 import '../widgets/ad_banner_widget.dart';
 import '../services/notification_service.dart';
 import '../services/chat_service.dart';
+import '../services/friend_service.dart';
 import 'chat_room_screen.dart';
 
 class FlashDetailScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class FlashDetailScreen extends StatefulWidget {
 class _FlashDetailScreenState extends State<FlashDetailScreen> {
   final NotificationService _notificationService = NotificationService();
   final ChatService _chatService = ChatService();
+  final FriendService _friendService = FriendService();
   bool _isJoining = false;
   bool _isParticipant = false;
   bool _isHost = false;
@@ -254,6 +256,31 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
     }
   }
 
+  // 친구 추가 요청 메서드
+  Future<void> _sendFriendRequest() async {
+    try {
+      final success = await _friendService.sendFriendRequest(widget.meeting.hostId);
+      
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${widget.meeting.hostName}님을 친구로 추가했습니다')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('이미 친구입니다')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('친구 추가에 실패했습니다: $e')),
+        );
+      }
+    }
+  }
+
   Widget _buildInfoRow({required IconData icon, required String label, required String value}) {
     return Row(
       children: [
@@ -355,6 +382,507 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
     );
   }
 
+  // 모임 수정 다이얼로그
+  void _showEditMeetingDialog() {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController departureAddressController = TextEditingController(text: widget.meeting.departureAddress);
+    final TextEditingController departureDetailAddressController = TextEditingController(text: widget.meeting.departureDetailAddress);
+    final TextEditingController destinationAddressController = TextEditingController(text: widget.meeting.destinationAddress);
+    final TextEditingController destinationDetailAddressController = TextEditingController(text: widget.meeting.destinationDetailAddress);
+    final TextEditingController timeController = TextEditingController(
+      text: DateFormat('yyyy년 MM월 dd일 HH시 mm분').format(widget.meeting.meetingTime)
+    );
+    DateTime? selectedTime = widget.meeting.meetingTime;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.85,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0, bottom: 16.0, left: 20.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '모임 정보 수정',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 모임 시간
+                      TextFormField(
+                        controller: timeController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: '모임 시간',
+                          hintStyle: TextStyle(color: Colors.grey),
+                          prefixIcon: Icon(Icons.access_time, size: 16, color: Theme.of(context).primaryColor),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        onTap: () async {
+                          final now = DateTime.now();
+                          final DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: selectedTime ?? now,
+                            firstDate: now,
+                            lastDate: now.add(const Duration(days: 30)),
+                            builder: (context, child) => Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: Colors.blue,
+                                  onPrimary: Colors.white,
+                                  onSurface: Colors.black,
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.blue,
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            ),
+                          );
+
+                          if (pickedDate != null) {
+                            final TimeOfDay? pickedTime = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(selectedTime ?? now),
+                              builder: (context, child) => Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: Colors.blue,
+                                    onPrimary: Colors.white,
+                                    onSurface: Colors.black,
+                                  ),
+                                  textButtonTheme: TextButtonThemeData(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.blue,
+                                    ),
+                                  ),
+                                ),
+                                child: child!,
+                              ),
+                            );
+
+                            if (pickedTime != null) {
+                              selectedTime = DateTime(
+                                pickedDate.year,
+                                pickedDate.month,
+                                pickedDate.day,
+                                pickedTime.hour,
+                                pickedTime.minute,
+                              );
+                              timeController.text = DateFormat('yyyy년 MM월 dd일 HH시 mm분')
+                                  .format(selectedTime!);
+                            }
+                          }
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      
+                      // 출발지
+                      TextFormField(
+                        controller: departureAddressController,
+                        decoration: InputDecoration(
+                          labelText: '출발지',
+                          hintText: '출발지를 입력해주세요',
+                          hintStyle: TextStyle(color: Colors.grey),
+                          prefixIcon: Icon(Icons.location_on, size: 16, color: Theme.of(context).primaryColor),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                    
+                      // 출발지 상세주소
+                      TextFormField(
+                        controller: departureDetailAddressController,
+                        decoration: InputDecoration(
+                          labelText: '출발지 상세주소',
+                          hintText: '출발지 상세주소를 입력해주세요 (선택)',
+                          hintStyle: TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      
+                      // 목적지
+                      TextFormField(
+                        controller: destinationAddressController,
+                        decoration: InputDecoration(
+                          labelText: '목적지',
+                          hintText: '목적지를 입력해주세요',
+                          hintStyle: TextStyle(color: Colors.grey),
+                          prefixIcon: Icon(Icons.location_on, size: 16, color: Theme.of(context).primaryColor),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                    
+                      // 목적지 상세주소
+                      TextFormField(
+                        controller: destinationDetailAddressController,
+                        decoration: InputDecoration(
+                          labelText: '목적지 상세주소',
+                          hintText: '목적지 상세주소를 입력해주세요 (선택)',
+                          hintStyle: TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: BorderSide(color: Color(0xFFF5F5F5)),
+                          ),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            '취소',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          if (departureAddressController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('출발지를 입력해주세요.')),
+                            );
+                            return;
+                          }
+                          if (destinationAddressController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('목적지를 입력해주세요.')),
+                            );
+                            return;
+                          }
+                          if (selectedTime == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('시간을 선택해주세요.')),
+                            );
+                            return;
+                          }
+                          if (selectedTime!.isBefore(DateTime.now())) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('현재 시간 이후로 선택해주세요.')),
+                            );
+                            return;
+                          }
+                          
+                          try {
+                            await FirebaseFirestore.instance
+                                .collection('meetings')
+                                .doc(widget.meeting.id)
+                                .update({
+                              'departureAddress': departureAddressController.text,
+                              'departureDetailAddress': departureDetailAddressController.text,
+                              'destinationAddress': destinationAddressController.text,
+                              'destinationDetailAddress': destinationDetailAddressController.text,
+                              'meetingTime': Timestamp.fromDate(selectedTime!),
+                            });
+                            
+                            // 채팅방에 공지 메시지 전송
+                            final chatRoomId = 'meeting_${widget.meeting.id}';
+                            await _chatService.sendMessage(
+                              chatRoomId, 
+                              '[공지] 모임 정보가 수정되었습니다.\n'
+                              '시간: ${DateFormat('MM/dd HH:mm').format(selectedTime!)}\n'
+                              '출발지: ${departureAddressController.text} ${departureDetailAddressController.text}\n'
+                              '목적지: ${destinationAddressController.text} ${destinationDetailAddressController.text}'
+                            );
+
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('모임 정보가 수정되었습니다.'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            
+                            // 화면 새로고침을 위해 Navigator.pop 후 다시 열기
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FlashDetailScreen(
+                                  meeting: MeetingPoint(
+                                    id: widget.meeting.id,
+                                    hostName: widget.meeting.hostName,
+                                    hostId: widget.meeting.hostId,
+                                    departureAddress: departureAddressController.text,
+                                    departureDetailAddress: departureDetailAddressController.text,
+                                    destinationAddress: destinationAddressController.text,
+                                    destinationDetailAddress: destinationDetailAddressController.text,
+                                    meetingTime: selectedTime!,
+                                    location: widget.meeting.location,
+                                    participants: widget.meeting.participants,
+                                    createdAt: widget.meeting.createdAt,
+                                  ),
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('모임 수정 중 오류가 발생했습니다: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            '저장',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // 모임 삭제 확인 다이얼로그
+  void _showDeleteConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('모임 삭제'),
+        content: Text('정말 이 모임을 삭제하시겠습니까?\n삭제된 모임은 복구할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                // 채팅방에 모임 삭제 메시지 전송
+                final chatRoomId = 'meeting_${widget.meeting.id}';
+                await _chatService.sendMessage(
+                  chatRoomId, 
+                  '[공지] 모임이 주최자에 의해 삭제되었습니다.'
+                );
+                
+                // 모임 삭제
+                await FirebaseFirestore.instance
+                    .collection('meetings')
+                    .doc(widget.meeting.id)
+                    .update({
+                  'status': 'deleted',
+                  'deletedAt': FieldValue.serverTimestamp(),
+                });
+                
+                Navigator.pop(context); // 다이얼로그 닫기
+                Navigator.pop(context); // 모임 상세 화면 닫기
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('모임이 삭제되었습니다.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('모임 삭제 중 오류가 발생했습니다: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text('삭제'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // 공지사항 작성 다이얼로그
+  void _showNoticeDialog() {
+    final TextEditingController noticeController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('공지사항 작성'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('모든 참가자에게 공지사항을 전송합니다.'),
+            SizedBox(height: 16),
+            TextField(
+              controller: noticeController,
+              decoration: InputDecoration(
+                hintText: '공지사항 내용을 입력하세요',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 5,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final notice = noticeController.text.trim();
+              if (notice.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('공지사항 내용을 입력해주세요')),
+                );
+                return;
+              }
+              
+              try {
+                // 채팅방에 공지 메시지 전송
+                final chatRoomId = 'meeting_${widget.meeting.id}';
+                await _chatService.sendMessage(
+                  chatRoomId, 
+                  '[공지] ${notice}'
+                );
+                
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('공지사항이 전송되었습니다.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('공지사항 전송 중 오류가 발생했습니다: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: Text('전송'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -363,6 +891,35 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        actions: [
+          if (_isHost)
+            PopupMenuButton(
+              icon: Icon(Icons.more_vert),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text('모임 수정'),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text('모임 삭제'),
+                ),
+                PopupMenuItem(
+                  value: 'notice',
+                  child: Text('공지사항 작성'),
+                ),
+              ],
+              onSelected: (value) async {
+                if (value == 'edit') {
+                  _showEditMeetingDialog();
+                } else if (value == 'delete') {
+                  _showDeleteConfirmDialog();
+                } else if (value == 'notice') {
+                  _showNoticeDialog();
+                }
+              },
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -437,11 +994,11 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        OutlinedButton(
+                        ElevatedButton(
                           onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
+                          style: ElevatedButton.styleFrom(
                             minimumSize: const Size(120, 45),
-                            side: const BorderSide(color: Colors.grey),
+                            backgroundColor: Colors.grey,
                           ),
                           child: const Text('돌아가기'),
                         ),

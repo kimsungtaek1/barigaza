@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../services/notification_service.dart';
 import '../services/post_service.dart';
+import '../services/friend_service.dart';
 import 'community_edit_screen.dart'; // 편집 화면 임포트
 
 class CommunityContentScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
   int _likeCount = 0;
   final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
   final PostService _postService = PostService();
+  final FriendService _friendService = FriendService();
   List<String> _blockedUsers = [];
 
   /// 댓글 편집 시 해당 댓글의 ID (null이면 새 댓글)
@@ -519,7 +521,35 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
 
   /// 게시글 헤더: 제목, 작성자(프로필 이미지, 닉네임, 시간)
   /// Firestore의 users 컬렉션에서 작성자 문서를 불러와 프로필 이미지를 표시합니다.
+  // 친구 추가 요청 메서드
+  Future<void> _sendFriendRequest(String userId, String nickname) async {
+    try {
+      final success = await _friendService.sendFriendRequest(userId);
+      
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$nickname님을 친구로 추가했습니다')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('이미 친구입니다')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('친구 추가에 실패했습니다: $e')),
+        );
+      }
+    }
+  }
+
   Widget _buildPostHeader(Map<String, dynamic> postData, String timeAgo) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final isMyPost = currentUserId == postData['userId'];
+    
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -593,6 +623,15 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
                   ],
                 ),
               ),
+              if (!isMyPost && currentUserId != null)
+                IconButton(
+                  icon: Icon(Icons.person_add, color: Colors.blue, size: 20),
+                  onPressed: () => _sendFriendRequest(
+                    postData['userId'],
+                    postData['nickname'] ?? '알 수 없음',
+                  ),
+                  tooltip: '친구 추가',
+                ),
             ],
           ),
         ],

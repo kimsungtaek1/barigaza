@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/car_model_service.dart';
 import '../models/car_model.dart';
 import '../widgets/ad_banner_widget.dart';
+import '../utils/manufacturer_names.dart';
 import 'my_car_screen5.dart';
+import 'my_car_screen_direct.dart';
 
 class MyCarScreen3 extends StatefulWidget {
   final String manufacturer;
@@ -24,35 +26,22 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
   List<CarModel> _carModels = [];
   String? selectedCarId;
   String? selectedCarName;
-  
-  // 제조사 이름 매핑 - 한글명과 영문명
-  Map<String, Map<String, String>> _manufacturerNameMap = {
-    'honda': {'kor': '혼다', 'eng': 'Honda'},
-    'yamaha': {'kor': '야마하', 'eng': 'Yamaha'},
-    'suzuki': {'kor': '스즈키', 'eng': 'Suzuki'},
-    'kawasaki': {'kor': '가와사키', 'eng': 'Kawasaki'},
-    'bmw': {'kor': 'BMW Motorrad', 'eng': ''},
-    'ducati': {'kor': '두카티', 'eng': 'Ducati'},
-    'triumph': {'kor': '트라이엄프', 'eng': 'Triumph'},
-    'ktm': {'kor': 'KTM', 'eng': ''},
-    'royal_enfield': {'kor': '로얄 엔필드', 'eng': 'Royal Enfield'},
-    'vespa': {'kor': '베스파', 'eng': 'Vespa'},
-  };
+
 
   @override
   void initState() {
     super.initState();
     _loadCarModels();
   }
-  
+
   // Helper method to get display name
   String _getManufacturerDisplayName(String manufacturerId) {
-    final manufacturerInfo = _manufacturerNameMap[manufacturerId.toLowerCase()];
+    final manufacturerInfo = manufacturerNameMap[manufacturerId.toLowerCase()];
     if (manufacturerInfo == null) return manufacturerId;
-    
+
     final korName = manufacturerInfo['kor'] ?? '';
     final engName = manufacturerInfo['eng'] ?? '';
-    
+
     if (engName.isEmpty) return korName;
     return '$korName($engName)';
   }
@@ -61,10 +50,10 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       final models = await _carModelService.getModels(widget.manufacturer);
-      
+
       setState(() {
         _carModels = models;
         _isLoading = false;
@@ -90,6 +79,18 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
         ),
       );
     }
+  }
+  
+  void _navigateToDirectRegistration() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MyCarScreenDirect(
+          manufacturer: widget.manufacturer,
+          carNumber: widget.carNumber,
+        ),
+      ),
+    );
   }
 
   @override
@@ -133,55 +134,76 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
           const SizedBox(height: 20),
           _isLoading
               ? Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                )
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
               : Expanded(
+            child: Column(
+              children: [
+                Expanded(
                   child: _carModels.isEmpty
                       ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('등록된 차량 모델이 없습니다.'),
-                              SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: _loadCarModels,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF746B5D),
-                                ),
-                                child: Text('새로고침'),
-                              ),
-                            ],
-                          ),
-                        )
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Text('등록된 차량 모델이 없습니다.'),
+                    ),
+                  )
                       : ListView.separated(
-                          itemCount: _carModels.length,
-                          separatorBuilder: (context, index) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final car = _carModels[index];
-                            final isSelected = selectedCarId == car.id;
+                    itemCount: _carModels.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final car = _carModels[index];
+                      final isSelected = selectedCarId == car.id;
 
-                            return ListTile(
-                              title: Text(
-                                car.model,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.blue : Colors.black,
-                                ),
-                              ),
-                              trailing: isSelected
-                                  ? const Icon(Icons.check_circle, color: Colors.blue)
-                                  : null,
-                              onTap: () {
-                                setState(() {
-                                  selectedCarId = car.id;
-                                  selectedCarName = car.model;
-                                });
-                              },
-                            );
-                          },
+                      return ListTile(
+                        title: Text(
+                          car.model,
+                          style: TextStyle(
+                            color: isSelected ? Colors.blue : Colors.black,
+                          ),
                         ),
+                        trailing: isSelected
+                            ? const Icon(Icons.check_circle, color: Colors.blue)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            selectedCarId = car.id;
+                            selectedCarName = car.model;
+                          });
+                        },
+                      );
+                    },
+                  ),
                 ),
+                // 직접 등록 버튼 추가
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _navigateToDirectRegistration,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        '직접 등록',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           if (selectedCarId != null)
             Container(
               width: double.infinity,
@@ -189,7 +211,7 @@ class _MyCarScreen3State extends State<MyCarScreen3> {
               child: ElevatedButton(
                 onPressed: _navigateToNextScreen,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF746B5D),
+                  backgroundColor: Theme.of(context).primaryColor, // Primary color로 변경
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(

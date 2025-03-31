@@ -917,10 +917,18 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                               );
                               return;
                             }
+                            // 사용자 닉네임 가져오기
+                            final userDoc = await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(user.uid)
+                                .get();
+
+                            final userNickname = userDoc['nickname'] ?? '알 수 없음';
+
                             final newMeeting = {
                               'title': titleController.text,
                               'hostId': user.uid,
-                              'hostName': user.displayName ?? '익명',
+                              'hostName': userNickname, // Firestore에서 가져온 닉네임 사용
                               'departureAddress': departureAddressController.text,
                               'departureDetailAddress': departureDetailAddressController.text,
                               'destinationAddress': destinationAddressController.text,
@@ -995,7 +1003,6 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     ),
     );
   }
-
   void _showMeetingDetail(MeetingPoint meeting) {
     Navigator.push(
       context,
@@ -1004,7 +1011,6 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
       ),
     );
   }
-
   void _navigateToAuthScreen(Widget screen) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {

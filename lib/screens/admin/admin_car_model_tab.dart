@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/car_model.dart';
 import '../../services/car_model_service.dart';
+import '../../utils/manufacturer_names.dart';
 
 class AdminCarModelTab extends StatefulWidget {
   final Function(bool) onSelectionModeChanged;
@@ -267,75 +268,60 @@ class _AdminCarModelTabState extends State<AdminCarModelTab> {
             Container(
               height: 120,
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: StreamBuilder<List<CarManufacturer>>(
-                stream: _carModelService.streamManufacturers(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: manufacturerNameMap.length,
+                separatorBuilder: (context, index) => SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final manufacturerId = manufacturerNameMap.keys.elementAt(index);
+                  final manufacturerData = manufacturerNameMap[manufacturerId]!;
+                  final manufacturerName = manufacturerData['eng']!;
+                  final isSelected = _selectedManufacturerId == manufacturerId;
                   
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Text('등록된 차량 제조사가 없습니다.'),
-                    );
-                  }
-                  
-                  final manufacturers = snapshot.data!;
-                  
-                  return ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: manufacturers.length,
-                    separatorBuilder: (context, index) => SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final manufacturer = manufacturers[index];
-                      final isSelected = _selectedManufacturerId == manufacturer.id;
-                      
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedManufacturerId = isSelected ? null : manufacturer.id;
-                          });
-                        },
-                        child: Container(
-                          width: 100,
-                          decoration: BoxDecoration(
-                            color: isSelected ? Color(0xFF746B5D) : Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isSelected ? Color(0xFF746B5D) : Colors.grey[300]!,
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedManufacturerId = isSelected ? null : manufacturerId;
+                      });
+                    },
+                    child: Container(
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: isSelected ? Color(0xFF746B5D) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? Color(0xFF746B5D) : Colors.grey[300]!,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Center(
+                              child: Text(
+                                manufacturerName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : Colors.black,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Center(
-                                  child: Text(
-                                    manufacturer.name,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : Colors.black,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                              // 제조사 편집/삭제 버튼 제거
-                              if (widget.selectionMode)
-                                Checkbox(
-                                  value: _selectedItems.contains(manufacturer.id),
-                                  onChanged: (value) {
-                                    _toggleSelection(manufacturer.id);
-                                  },
-                                  activeColor: Colors.blue,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                          // 제조사 편집/삭제 버튼 제거
+                          if (widget.selectionMode)
+                            Checkbox(
+                              value: _selectedItems.contains(manufacturerId),
+                              onChanged: (value) {
+                                _toggleSelection(manufacturerId);
+                              },
+                              activeColor: Colors.blue,
+                            ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
@@ -377,25 +363,9 @@ class _AdminCarModelTabState extends State<AdminCarModelTab> {
                           color: Colors.grey[200],
                           child: Row(
                             children: [
-                              StreamBuilder<List<CarManufacturer>>(
-                                stream: _carModelService.streamManufacturers(),
-                                builder: (context, snapshot) {
-                                  if (!snapshot.hasData) {
-                                    return SizedBox();
-                                  }
-                                  
-                                  final manufacturers = snapshot.data!;
-                                  final selectedManufacturer = manufacturers
-                                      .firstWhere(
-                                        (m) => m.id == _selectedManufacturerId,
-                                        orElse: () => CarManufacturer(id: '', name: ''),
-                                      );
-                                  
-                                  return Text(
-                                    '${selectedManufacturer.name} > ',
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  );
-                                },
+                              Text(
+                                '${manufacturerNameMap[_selectedManufacturerId]?['kor'] ?? ''} > ',
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               Expanded(
                                 child: TextField(

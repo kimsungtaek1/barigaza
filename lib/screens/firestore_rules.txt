@@ -155,7 +155,12 @@ service cloud.firestore {
           // 관리자 계정이 role 필드만 업데이트하는 경우
           (isAdminRole() &&
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
-          );
+          )
+          ||
+          // 친구 목록 필드만 업데이트하는 경우 (친구 추가/삭제 기능)
+          (isAuthenticated() && 
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends']) &&
+           isValidFriendsList());
           
       // 친구 목록 필드 검증 함수 추가
       function isValidFriendsList() {
@@ -164,6 +169,41 @@ service cloud.firestore {
                data.friends.size() <= 1000; // 친구 목록 최대 크기 제한
       }
       allow delete: if isAdminRole();
+    }
+
+    // ─────────────────────────────
+    // 친구 관리 규칙 (카카오톡 방식: 단방향 친구 추가)
+    // ─────────────────────────────
+    // 참고: 카카오톡 방식에서는 친구 요청 없이 바로 친구 추가가 가능합니다.
+    // 따라서 friendRequests 컬렉션은 더 이상 사용하지 않습니다.
+
+    // ─────────────────────────────
+    // 신고 컬렉션 규칙 추가
+    // ─────────────────────────────
+    match /reports/{reportId} {
+      function isValidReport() {
+        let data = request.resource.data;
+        return data.reporterId is string &&
+               data.reporterId == request.auth.uid &&
+               data.reportedUserId is string &&
+               data.reason is string &&
+               data.type is string &&
+               data.status is string &&
+               data.timestamp is timestamp;
+      }
+      
+      // 관리자만 모든 신고를 읽을 수 있음
+      allow read: if isAuthenticated() && 
+                 (resource.data.reporterId == request.auth.uid || isAdminRole());
+      
+      // 인증된 사용자는 신고를 생성할 수 있음
+      allow create: if isAuthenticated() && isValidReport();
+      
+      // 관리자만 신고 상태를 업데이트할 수 있음
+      allow update: if isAuthenticated() && isAdminRole();
+      
+      // 관리자만 신고를 삭제할 수 있음
+      allow delete: if isAuthenticated() && isAdminRole();
     }
 
     // ─────────────────────────────
@@ -344,8 +384,11 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if request.auth != null &&
                    resource.data.userId == request.auth.uid;
-      allow write: if request.auth != null &&
-                   request.auth.uid == resource.data.userId;
+      // 인증된 사용자는 알림을 생성할 수 있음 (친구 추가, 친구 차단 등)
+      allow create: if request.auth != null;
+      // 사용자는 자신의 알림만 업데이트/삭제할 수 있음
+      allow update, delete: if request.auth != null &&
+                           resource.data.userId == request.auth.uid;
     }
 
     // ─────────────────────────────

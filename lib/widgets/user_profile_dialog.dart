@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../screens/chat_screen.dart';
+import '../screens/chat_room_screen.dart';
 import '../services/chat_service.dart';
 
 class UserProfileDialog extends StatefulWidget {
@@ -24,7 +24,7 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
   final ChatService _chatService = ChatService();
   bool _isLoading = false;
 
-  Future<void> _handleAddFriend() async {
+  Future<void> _handleStartChat() async {
     if (mounted) {
       setState(() => _isLoading = true);
     }
@@ -35,48 +35,68 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
         throw Exception('로그인이 필요합니다');
       }
 
-      // 현재 사용자의 친구 목록 가져오기
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
+      // 1. 기존 채팅방 찾기
+      final chatQuery = await FirebaseFirestore.instance
+          .collection('chatRooms')
+          .where('users', arrayContains: currentUser.uid)
           .get();
-      
-      // 친구 목록이 없으면 새로 생성
-      final userData = userDoc.data() ?? {};
-      List<String> friends = List<String>.from(userData['friends'] ?? []);
-      
-      // 이미 친구 목록에 있는지 확인
-      if (friends.contains(widget.userId)) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('이미 친구로 추가되어 있습니다')),
-          );
+
+      // 2. 두 사용자가 포함된 채팅방 찾기
+      String? existingChatId;
+      for (var doc in chatQuery.docs) {
+        final users = List<String>.from(doc['users']);
+        if (users.contains(widget.userId)) {
+          existingChatId = doc.id;
+          break;
         }
-        return;
       }
-      
-      // 친구 목록에 추가
-      friends.add(widget.userId);
-      
-      // 사용자 문서 업데이트
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .update({'friends': friends});
+
+      // 3. 채팅방이 없으면 새로 생성
+      String chatId;
+      if (existingChatId != null) {
+        chatId = existingChatId;
+      } else {
+        // 현재 사용자 정보 가져오기
+        final currentUserDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        final currentUserData = currentUserDoc.data() ?? {};
+        final currentUserNickname = currentUserData['nickname'] ?? '알 수 없음';
+
+        // 채팅방 생성
+        final chatRef = await FirebaseFirestore.instance.collection('chatRooms').add({
+          'users': [currentUser.uid, widget.userId],
+          'lastMessage': '',
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'userDetails': {
+            currentUser.uid: {'nickname': currentUserNickname},
+            widget.userId: {'nickname': widget.nickname, 'profileImage': widget.profileImage}
+          }
+        });
+        chatId = chatRef.id;
+      }
 
       if (mounted) {
         // 다이얼로그 닫기
         Navigator.of(context).pop();
         
-        // 성공 메시지 표시
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${widget.nickname}님이 친구로 추가되었습니다')),
+        // 채팅방으로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatRoomScreen(
+              chatId: chatId,
+              otherUserNickname: widget.nickname,
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('친구 추가에 실패했습니다: $e')),
+          SnackBar(content: Text('채팅방 생성에 실패했습니다: $e')),
         );
       }
     } finally {
@@ -125,7 +145,7 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleAddFriend,
+                onPressed: _isLoading ? null : _handleStartChat,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2F6DF3),
                   foregroundColor: Colors.white,
@@ -146,7 +166,7 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                   ),
                 )
                     : const Text(
-                  '친구추가',
+                  '대화하기',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
