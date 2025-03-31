@@ -410,15 +410,30 @@ service cloud.firestore {
           (!data.keys().hasAny(['viewCount']) || data.viewCount is number);
       }
       
-      // 게스트 사용자도 게시물 읽기 허용
+      // 게시물 읽기 권한 설정
       allow read: if true;
+      
+      // 게시물 생성 권한 설정
       allow create: if isAuthenticated() && isValidPost() && 
-                   (request.resource.data.category != '공지사항' || isAdminRole());
+                   (
+                     // 공지사항은 관리자만 작성 가능
+                     (request.resource.data.category == '공지사항' && isAdminRole()) ||
+                     // 질문답변은 관리자와 일반 사용자 모두 작성 가능
+                     (request.resource.data.category == '질문·답변') ||
+                     // 나머지 카테고리는 일반 사용자도 작성 가능
+                     (request.resource.data.category != '공지사항' && request.resource.data.category != '질문·답변')
+                   );
+      
+      // 게시물 수정 권한 설정
       allow update: if isAuthenticated() && 
-                    (request.auth.uid == resource.data.userId || 
-                     isAdminRole() || 
-                     // viewCount 필드만 업데이트하는 경우에는 누구나 가능
-                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']));
+                    (
+                      // 관리자는 모든 게시물 수정 가능
+                      isAdminRole() || 
+                      // 자신의 게시물만 수정 가능 (공지사항 제외)
+                      (request.auth.uid == resource.data.userId && resource.data.category != '공지사항') ||
+                      // viewCount 필드만 업데이트하는 경우에는 누구나 가능
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount'])
+                    );
 
       match /likes/{userId} {
         allow read: if true;
@@ -426,8 +441,26 @@ service cloud.firestore {
       }
 
       match /comments/{commentId} {
-        allow read: if true;
-        allow write: if isAuthenticated();
+        // 댓글 읽기 권한 설정
+        allow read: if 
+          // 질문답변 카테고리의 경우 작성자와 관리자만 읽기 가능
+          (resource.data.category == '질문·답변' && 
+           (request.auth.uid == resource.data.userId || isAdminRole())) ||
+          // 다른 카테고리는 모두 읽기 가능
+          (resource.data.category != '질문·답변');
+        
+        // 댓글 쓰기 권한 설정
+        allow create: if isAuthenticated() && 
+                      // 공지사항에는 댓글 작성 불가
+                      get(/databases/$(database)/documents/posts/$(postId)).data.category != '공지사항';
+        
+        // 댓글 수정 권한 설정
+        allow update: if isAuthenticated() && 
+                      (request.auth.uid == resource.data.userId || isAdminRole());
+        
+        // 댓글 삭제 권한 설정
+        allow delete: if isAuthenticated() && 
+                      (request.auth.uid == resource.data.userId || isAdminRole());
 
         // 댓글 신고 컬렉션 추가
         match /reports/{reporterId} {

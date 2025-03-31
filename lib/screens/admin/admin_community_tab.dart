@@ -39,6 +39,7 @@ class _AdminCommunityTabState extends State<AdminCommunityTab> {
       setState(() => _isLoading = true);
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('posts')
+          .where('category', whereIn: ['자유게시판', '바리·카페'])
           .orderBy('createdAt', descending: true)
           .get();
       setState(() {
@@ -347,7 +348,7 @@ class _PostDetailScreenState extends State<_PostDetailScreen> {
   List<DocumentSnapshot> _comments = [];
   bool _isLoadingComments = false;
 
-  final List<String> _categories = ['자유게시판', '바리·카페', '질문·답변', '공지사항'];
+  final List<String> _categories = ['자유게시판', '바리·카페'];
 
   @override
   void initState() {
@@ -486,6 +487,7 @@ class _PostDetailScreenState extends State<_PostDetailScreen> {
     actions: [
     TextButton(
     onPressed: _isLoading ? null : _updatePost,
+    style: TextButton.styleFrom(foregroundColor: Colors.black),
     child: const Text('수정'),
     ),
     ],

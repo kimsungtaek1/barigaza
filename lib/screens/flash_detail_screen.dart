@@ -972,7 +972,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                             MaterialPageRoute(
                               builder: (context) => ChatRoomScreen(
                                 chatId: chatRoomId,
-                                otherUserNickname: '${widget.meeting.hostName}님의 바리',
+                                otherUserNickname: widget.meeting.title,
                               ),
                             ),
                           );

@@ -20,7 +20,7 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
   File? _image;
   bool _isLoading = false;
 
-  final List<String> _categories = ['자유게시판', '바리·카페', '질문·답변']; // 공지사항 제외
+  final List<String> _categories = ['자유게시판', '바리·카페', '질문·답변', '공지사항'];
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -111,8 +111,6 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         return;
       }
 
-      print("유저:$user");
-
       // 사용자 정보 가져오기 (Firestore에서)
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -121,6 +119,18 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
       final userData = userDoc.data() ?? {};
 
       final userNickname = userData['nickname'] ?? '알 수 없음';
+      final userRole = userData['role'] ?? '';
+      
+      // 공지사항은 관리자만 작성 가능
+      if (_selectedCategory == '공지사항' && userRole != 'admin' && userRole != 'master') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('공지사항은 관리자만 작성할 수 있습니다.')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
 
       String? imageUrl = await _uploadImage();
 

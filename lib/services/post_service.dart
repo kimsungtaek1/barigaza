@@ -235,6 +235,16 @@ class PostService {
       if (category == '팔로잉') {
         // '팔로잉'인 경우: 정렬은 아래 쿼리에서 적용 (친구 목록 필터링)
         // 여기서는 기본 쿼리만 사용
+      } else if (category == '질문·답변') {
+        // 질문답변 카테고리: 로그인한 사용자의 게시물만 표시
+        final currentUser = _auth.currentUser;
+        if (currentUser != null) {
+          query = query.where('category', isEqualTo: category)
+                       .where('userId', isEqualTo: currentUser.uid);
+        } else {
+          // 로그인하지 않은 경우 빈 결과 반환
+          query = query.where('category', isEqualTo: 'non_existent_category');
+        }
       } else if (category != '탐색') {
         // '탐색'이 아닌 모든 카테고리: 카테고리 필터링 적용
         print('카테고리 필터링: $category');

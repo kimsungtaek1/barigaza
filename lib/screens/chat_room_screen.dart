@@ -12,6 +12,7 @@ import '../services/chat_service.dart';
 import '../services/storage_service.dart';
 import '../services/content_filter_service.dart';
 import '../services/friend_service.dart';
+import '../widgets/user_profile_dialog.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final String chatId;
@@ -516,79 +517,25 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void _showUserProfileDialog(String userId, String nickname, String? profileImage) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        contentPadding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundImage: profileImage != null ? NetworkImage(profileImage) : null,
-                    child: profileImage == null ? Icon(Icons.person, size: 40) : null,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    nickname,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            InkWell(
-              onTap: () {
-                Navigator.pop(context);
-                _addFriend(userId, nickname);
-              },
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.grey[300]!)),
-                ),
-                child: Center(
-                  child: Text(
-                    '친구추가',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            InkWell(
-              onTap: () {
-                Navigator.pop(context);
-                _showBlockUserDialog(userId, nickname);
-              },
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.grey[300]!)),
-                ),
-                child: Center(
-                  child: Text(
-                    '차단하기',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) => UserProfileDialog(
+        userId: userId,
+        nickname: nickname,
+        profileImage: profileImage,
       ),
-    );
+    ).then((_) {
+      // Dialog가 닫힌 후의 추가 작업이 필요하다면 여기서 처리
+      setState(() {
+        // 필요한 상태 업데이트
+      });
+    }).catchError((error) {
+      // 에러 처리
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('오류가 발생했습니다: $error')),
+        );
+      }
+    });
   }
   
   // 친구추가 메서드
