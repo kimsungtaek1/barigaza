@@ -521,7 +521,7 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
 
   /// 게시글 헤더: 제목, 작성자(프로필 이미지, 닉네임, 시간)
   /// Firestore의 users 컬렉션에서 작성자 문서를 불러와 프로필 이미지를 표시합니다.
-  // 친구 추가 요청 메서드
+  // 친구추가 요청 메서드
   Future<void> _sendFriendRequest(String userId, String nickname) async {
     try {
       final success = await _friendService.sendFriendRequest(userId);
@@ -540,7 +540,7 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('친구 추가에 실패했습니다: $e')),
+          SnackBar(content: Text('친구추가에 실패했습니다: $e')),
         );
       }
     }
@@ -630,7 +630,7 @@ class _CommunityContentScreenState extends State<CommunityContentScreen> {
                     postData['userId'],
                     postData['nickname'] ?? '알 수 없음',
                   ),
-                  tooltip: '친구 추가',
+                  tooltip: '친구추가',
                 ),
             ],
           ),

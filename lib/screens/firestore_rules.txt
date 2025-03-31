@@ -157,7 +157,7 @@ service cloud.firestore {
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
           )
           ||
-          // 친구 목록 필드만 업데이트하는 경우 (친구 추가/삭제 기능)
+          // 친구 목록 필드만 업데이트하는 경우 (친구추가/삭제 기능)
           (isAuthenticated() && 
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends']) &&
            isValidFriendsList());
@@ -172,9 +172,9 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────
-    // 친구 관리 규칙 (카카오톡 방식: 단방향 친구 추가)
+    // 친구 관리 규칙 (카카오톡 방식: 단방향 친구추가)
     // ─────────────────────────────
-    // 참고: 카카오톡 방식에서는 친구 요청 없이 바로 친구 추가가 가능합니다.
+    // 참고: 카카오톡 방식에서는 친구 요청 없이 바로 친구추가가 가능합니다.
     // 따라서 friendRequests 컬렉션은 더 이상 사용하지 않습니다.
 
     // ─────────────────────────────
@@ -384,7 +384,7 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if request.auth != null &&
                    resource.data.userId == request.auth.uid;
-      // 인증된 사용자는 알림을 생성할 수 있음 (친구 추가, 친구 차단 등)
+      // 인증된 사용자는 알림을 생성할 수 있음 (친구추가, 친구 차단 등)
       allow create: if request.auth != null;
       // 사용자는 자신의 알림만 업데이트/삭제할 수 있음
       allow update, delete: if request.auth != null &&

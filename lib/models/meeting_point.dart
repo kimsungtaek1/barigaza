@@ -12,6 +12,7 @@ class MeetingPoint {
   final GeoPoint location;
   final List<String> participants;
   final DateTime? createdAt;
+  final String title;
 
   MeetingPoint({
     required this.id,
@@ -24,6 +25,7 @@ class MeetingPoint {
     required this.meetingTime,
     required this.location,
     required this.participants,
+    required this.title,
     this.createdAt,
   });
 
@@ -40,6 +42,7 @@ class MeetingPoint {
       'participants': participants,
       'status': 'active',
       'createdAt': FieldValue.serverTimestamp(),
+      'title': title, 
     };
   }
 
@@ -56,6 +59,7 @@ class MeetingPoint {
       meetingTime: (data['meetingTime'] as Timestamp).toDate(),
       location: data['location'] as GeoPoint,
       participants: List<String>.from(data['participants'] ?? []),
+      title: data['title'] ?? '',
       createdAt: data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate() : null,
     );
   }

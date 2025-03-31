@@ -52,7 +52,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    '친구 추가가 완료되었습니다!',
+                    '친구추가가 완료되었습니다!',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -434,7 +434,9 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                   ],
                 ),
                 subtitle: Text(
-                  chatData['lastMessage']?.toString() ?? '',
+                  (chatData?['lastMessage']?.toString().trim().isEmpty ?? true)
+                      ? '채팅이 없습니다.'
+                      : chatData!['lastMessage'].toString(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

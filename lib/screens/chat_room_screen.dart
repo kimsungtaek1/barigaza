@@ -437,12 +437,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         backgroundImage: user['profileImage'] != null
                             ? NetworkImage(user['profileImage'])
                             : null,
-                        child: user['profileImage'] == null
-                            ? Text(
-                          user['nickname'][0],
-                          style: TextStyle(fontSize: 20),
-                        )
-                            : null,
+                        child: user['profileImage'] == null ? Icon(Icons.person, size: 25) : null,
                       ),
                     ),
                     SizedBox(height: 4),
@@ -485,10 +480,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           children: [
             Container(
               padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -517,7 +508,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    '친구 추가',
+                    '친구추가',
                     style: TextStyle(
                       color: Colors.blue,
                       fontWeight: FontWeight.bold,
@@ -554,7 +545,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
   
-  // 친구 추가 메서드
+  // 친구추가 메서드
   Future<void> _addFriend(String userId, String nickname) async {
     try {
       final success = await _friendService.sendFriendRequest(userId);
@@ -573,7 +564,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('친구 추가에 실패했습니다: $e')),
+          SnackBar(content: Text('친구추가에 실패했습니다: $e')),
         );
       }
     }

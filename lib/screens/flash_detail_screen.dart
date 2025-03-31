@@ -256,7 +256,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
     }
   }
 
-  // 친구 추가 요청 메서드
+  // 친구추가 요청 메서드
   Future<void> _sendFriendRequest() async {
     try {
       final success = await _friendService.sendFriendRequest(widget.meeting.hostId);
@@ -275,7 +275,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('친구 추가에 실패했습니다: $e')),
+          SnackBar(content: Text('친구추가에 실패했습니다: $e')),
         );
       }
     }
@@ -641,6 +641,12 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                     Expanded(
                       child: InkWell(
                         onTap: () async {
+                          if (titleController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('모임 제목을 입력해주세요.')),
+                            );
+                            return;
+                          }
                           if (departureAddressController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('출발지를 입력해주세요.')),
@@ -712,6 +718,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                                     destinationDetailAddress: destinationDetailAddressController.text,
                                     meetingTime: selectedTime!,
                                     location: widget.meeting.location,
+                                    title: titleController.text,
                                     participants: widget.meeting.participants,
                                     createdAt: widget.meeting.createdAt,
                                   ),
@@ -935,32 +942,38 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildInfoRow(
+                          icon: Icons.note,
+                          label: '모임 제목',
+                          value: widget.meeting.title,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
                           icon: Icons.person,
-                          label: '주최자',
+                          label: '주  최  자',
                           value: widget.meeting.hostName,
                         ),
                         const SizedBox(height: 12),
                         _buildInfoRow(
                           icon: Icons.access_time,
-                          label: '시간',
+                          label: '시       간',
                           value: DateFormat('MM/dd HH:mm').format(widget.meeting.meetingTime),
                         ),
                         const SizedBox(height: 12),
                         _buildInfoRow(
                           icon: Icons.location_on,
-                          label: '출발지',
+                          label: '출  발  지',
                           value: widget.meeting.departureAddress + ' ' + widget.meeting.departureDetailAddress,
                         ),
                         const SizedBox(height: 12),
                         _buildInfoRow(
                           icon: Icons.location_on,
-                          label: '목적지',
+                          label: '목  적  지',
                           value: widget.meeting.destinationAddress + ' ' + widget.meeting.destinationDetailAddress,
                         ),
                         const SizedBox(height: 12),
                         _buildInfoRow(
                           icon: Icons.group,
-                          label: '참가자',
+                          label: '참  가  자',
                           value: '${widget.meeting.participants.length}명',
                         ),
                       ],
