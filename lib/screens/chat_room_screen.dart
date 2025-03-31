@@ -553,7 +553,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$nickname님을 친구로 추가했습니다 (카카오톡 방식: 단방향 추가)')),
+            SnackBar(content: Text('$nickname님을 친구로 추가했습니다')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
