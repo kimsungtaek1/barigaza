@@ -8,7 +8,7 @@ import '../widgets/ad_banner_widget.dart';
 
 class FuelRecordScreen extends StatefulWidget {
   final String? recordId;
-  
+
   const FuelRecordScreen({
     Key? key,
     this.recordId,
@@ -20,7 +20,7 @@ class FuelRecordScreen extends StatefulWidget {
 
 class _FuelRecordScreenState extends State<FuelRecordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _distanceController = TextEditingController(text: '0');
+  final _mileageController = TextEditingController(text: '0');
   final _amountController = TextEditingController(text: '0');
   final _priceController = TextEditingController(text: '0');
   final _memoController = TextEditingController();
@@ -34,7 +34,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
     super.initState();
     _recordId = widget.recordId;
     _isEditing = _recordId != null;
-    
+
     if (_isEditing) {
       _loadExistingRecord();
     } else {
@@ -44,7 +44,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
 
   @override
   void dispose() {
-    _distanceController.dispose();
+    _mileageController.dispose();
     _amountController.dispose();
     _priceController.dispose();
     _memoController.dispose();
@@ -52,24 +52,24 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
   }
 
   double _previousMileage = 0.0;
-  double _originalDistance = 0.0;
-  
+  double _originalMileage = 0.0;
+
   Future<void> _loadExistingRecord() async {
     setState(() => _isLoading = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
-      
+
       // 사용자 정보 로드
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
-          
+
       if (userDoc.exists && userDoc.data()?['currentMileage'] != null) {
         _previousMileage = double.parse(userDoc.data()!['currentMileage'].toString());
       }
-      
+
       // 기존 주유 기록 로드
       final recordDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -77,12 +77,17 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
           .collection('fuel_records')
           .doc(_recordId)
           .get();
-      
+
       if (recordDoc.exists) {
         final data = recordDoc.data()!;
+        // 원래 저장된 총 주행거리 값 가져오기 (새로운 필드 사용)
+        double totalMileage = data['totalMileage'] != null
+            ? double.parse(data['totalMileage'].toString())
+            : _previousMileage;
+
         setState(() {
-          _distanceController.text = data['distance'].toString();
-          _originalDistance = double.parse(data['distance'].toString());
+          _mileageController.text = totalMileage.toString();
+          _originalMileage = totalMileage;
           _amountController.text = data['amount'].toString();
           _priceController.text = data['cost'].toString();
           selectedFuelType = data['type'];
@@ -102,7 +107,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
       }
     }
   }
-  
+
   Future<void> _loadLastMileage() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -114,8 +119,11 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
           .get();
 
       if (userDoc.exists && userDoc.data()?['currentMileage'] != null) {
+        final currentMileage = double.parse(userDoc.data()!['currentMileage'].toString());
         setState(() {
-          _previousMileage = double.parse(userDoc.data()!['currentMileage'].toString());
+          _previousMileage = currentMileage;
+          // 현재 주행거리를 기본값으로 설정
+          _mileageController.text = currentMileage.toString();
         });
       }
     } catch (e) {
@@ -123,13 +131,22 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
     }
   }
 
-  String? _validateDistance(String? value) {
+  String? _validateMileage(String? value) {
     if (value == null || value.isEmpty) {
-      return '주행거리를 입력해주세요';
+      return '현재 주행거리를 입력해주세요';
     }
     if (double.tryParse(value) == null) {
       return '올바른 숫자를 입력해주세요';
     }
+
+    // 이전 주행거리보다 작은지 확인 (새 기록일 경우만)
+    if (!_isEditing) {
+      final currentMileage = double.tryParse(value) ?? 0;
+      if (currentMileage < _previousMileage) {
+        return '현재 주행거리는 이전 주행거리(${_previousMileage.toStringAsFixed(1)}km)보다 커야 합니다';
+      }
+    }
+
     return null;
   }
 
@@ -169,29 +186,46 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('로그인이 필요합니다');
 
+      // 현재 입력된 총 주행거리
+      final totalMileage = double.parse(_mileageController.text);
+
+      // 실제 주행거리 계산 (현재 총 주행거리 - 이전 총 주행거리)
+      double actualDistance = 0.0;
+
+      if (_isEditing) {
+        // 수정 시: 새로 입력한 총 주행거리 - 원래 저장된 총 주행거리
+        actualDistance = totalMileage - _originalMileage;
+      } else {
+        // 새 기록 시: 새로 입력한 총 주행거리 - 이전 기록의 총 주행거리
+        actualDistance = totalMileage - _previousMileage;
+      }
+
+      // 음수 확인 (보호 장치)
+      if (actualDistance < 0) {
+        throw Exception('계산된 주행거리가 음수입니다. 입력한 주행거리를 확인해주세요.');
+      }
+
       // users 컬렉션 내의 fuel_records 서브컬렉션에 저장할 데이터
       final record = {
-        'distance': double.parse(_distanceController.text),
+        'totalMileage': totalMileage, // 총 주행거리 저장
+        'distance': actualDistance, // 실제 주행 거리 저장
         'amount': double.parse(_amountController.text),
         'type': selectedFuelType!,
         'cost': double.parse(_priceController.text),
         'memo': _memoController.text,
       };
-      
+
       final usersRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-      
+
       if (_isEditing) {
         // 기존 기록 수정
         record['date'] = FieldValue.serverTimestamp(); // 수정 시간으로 업데이트
-        
+
         await usersRef.collection('fuel_records').doc(_recordId).update(record);
-        
-        // 주행거리 차이만큼 현재 주행거리에서 조정
-        final distanceDifference = double.parse(_distanceController.text) - _originalDistance;
-        final updatedMileage = _previousMileage + distanceDifference;
-        
+
+        // 현재 총 주행거리로 업데이트
         await usersRef.update({
-          'currentMileage': updatedMileage,
+          'currentMileage': totalMileage,
           'lastFuelRecord': {
             'date': Timestamp.fromDate(DateTime.now()),
             'fuelType': selectedFuelType,
@@ -199,7 +233,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
             'price': double.parse(_priceController.text),
           },
         });
-        
+
         if (mounted) {
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -209,14 +243,12 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
       } else {
         // 새 기록 추가
         record['date'] = DateTime.now();
-        
+
         await usersRef.collection('fuel_records').add(record);
 
-        // 현재 주행거리 업데이트 (이전 주행거리 + 추가 주행거리)
-        final updatedMileage = _previousMileage + double.parse(_distanceController.text);
-        
+        // 현재 총 주행거리로 업데이트
         await usersRef.update({
-          'currentMileage': updatedMileage,
+          'currentMileage': totalMileage,
           'lastFuelRecord': {
             'date': Timestamp.fromDate(DateTime.now()),
             'fuelType': selectedFuelType,
@@ -265,7 +297,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      resizeToAvoidBottomInset: true, // 키보드가 올라오면 화면이 스크롤되도록 변경
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           Column(
@@ -288,11 +320,11 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                           ),
                           SizedBox(height: 16),
 
-                          // 주행거리 입력
-                          Text('주행거리'),
+                          // 현재 총 주행거리 입력
+                          Text('현재 총 주행거리'),
                           SizedBox(height: 8),
                           TextFormField(
-                            controller: _distanceController,
+                            controller: _mileageController,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
                               FilteringTextInputFormatter.allow(
@@ -315,12 +347,16 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                                 borderSide: BorderSide(color: Color(0xFFF5F5F5)),
                               ),
                               suffixText: 'km',
+                              hintText: '계기판에 표시된 총 주행거리',
+                              helperText: !_isEditing
+                                  ? '이전 기록: ${_previousMileage.toStringAsFixed(1)}km'
+                                  : null,
                               errorStyle: TextStyle(
                                 color: Colors.red,
                                 fontSize: 12,
                               ),
                             ),
-                            validator: _validateDistance,
+                            validator: _validateMileage,
                           ),
                           SizedBox(height: 24),
 
@@ -367,43 +403,43 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                               Expanded(
                                 flex: 1,
                                 child: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Color(0xFFF5F5F5)),
-                                  ),
-                                  child: DropdownButtonFormField<String>(
-                                    value: selectedFuelType,
-                                    hint: Text('선택'),
-                                    dropdownColor: Colors.white,
-                                    menuMaxHeight: 200,
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: InputBorder.none,
-                                      errorStyle: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 12,
-                                      ),
+                                    padding: EdgeInsets.symmetric(horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Color(0xFFF5F5F5)),
                                     ),
-                                    items: <String>['휘발유', '고급유']
-                                        .map<DropdownMenuItem<String>>((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Container(
-                                          color: Colors.white,
-                                          child: Text(value),
+                                    child: DropdownButtonFormField<String>(
+                                      value: selectedFuelType,
+                                      hint: Text('선택'),
+                                      dropdownColor: Colors.white,
+                                      menuMaxHeight: 200,
+                                      decoration: InputDecoration(
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: InputBorder.none,
+                                        errorStyle: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        selectedFuelType = newValue;
-                                      });
-                                    },
-                                    validator: _validateFuelType,
-                                  )
+                                      ),
+                                      items: <String>['휘발유', '고급유']
+                                          .map<DropdownMenuItem<String>>((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Container(
+                                            color: Colors.white,
+                                            child: Text(value),
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          selectedFuelType = newValue;
+                                        });
+                                      },
+                                      validator: _validateFuelType,
+                                    )
                                 ),
                               ),
                               SizedBox(width: 12),
@@ -446,7 +482,7 @@ class _FuelRecordScreenState extends State<FuelRecordScreen> {
                             ],
                           ),
                           SizedBox(height: 24),
-                          
+
                           // 메모 입력 필드 추가
                           Text('메모'),
                           SizedBox(height: 8),
