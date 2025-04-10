@@ -560,7 +560,6 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                     : null,
               ),
               title: Text(nickname),
-              subtitle: Text(userData['status'] ?? ''),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
