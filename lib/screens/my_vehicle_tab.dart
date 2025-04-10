@@ -264,25 +264,35 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
           .doc(user.uid)
           .collection('fuel_records')
           .orderBy('date', descending: true)
+          .limit(10) // 최근 10개 기록만 사용
           .get();
 
-      double totalDistance = 0.0;
-      double totalFuel = 0.0;
+      double totalEfficiency = 0.0;
+      int validRecords = 0;
 
       for (var doc in records.docs) {
         final data = doc.data();
-        final distance = data['distance'] is int
-            ? (data['distance'] as int).toDouble()
-            : data['distance'] as double;
-        final amount = data['amount'] is int
-            ? (data['amount'] as int).toDouble()
-            : data['amount'] as double;
+        // 각 기록에서 주행거리(distance)와 주유량(amount) 확인
+        if (data.containsKey('distance') && data.containsKey('amount')) {
+          final distance = data['distance'] is int
+              ? (data['distance'] as int).toDouble()
+              : data['distance'] as double;
 
-        totalDistance += distance;
-        totalFuel += amount;
+          final amount = data['amount'] is int
+              ? (data['amount'] as int).toDouble()
+              : data['amount'] as double;
+
+          // 유효한 데이터만 계산에 포함
+          if (distance > 0 && amount > 0) {
+            final efficiency = distance / amount;
+            totalEfficiency += efficiency;
+            validRecords++;
+          }
+        }
       }
 
-      return totalFuel > 0 ? totalDistance / totalFuel : 0.0;
+      // 유효한 기록이 없으면 0 반환
+      return validRecords > 0 ? totalEfficiency / validRecords : 0.0;
     } catch (e) {
       print('평균 연비 계산 중 오류 발생: $e');
       return 0.0;
@@ -470,6 +480,7 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                   ],
                 ),
                 SizedBox(height: 12),
+                // 주유 기록 카드 부분 수정
                 FutureBuilder<List<Map<String, dynamic>>>(
                   future: _loadFuelRecords(),
                   builder: (context, snapshot) {
@@ -528,9 +539,13 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                                   );
 
                                   if (result == true) {
-                                    await _loadData();
-                                    if (mounted) { // Add mounted check
-                                      setState(() {});
+                                    if (mounted) {
+                                      // 데이터를 완전히 새로고침
+                                      setState(() => _isLoading = true);
+                                      await _loadData();
+                                      if (mounted) {
+                                        setState(() => _isLoading = false);
+                                      }
                                     }
                                   }
                                 }
@@ -569,7 +584,10 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                                       ),
                                     ),
                                     Text(
-                                      '${record['fuelEfficiency'].toStringAsFixed(1)} km/L',
+                                      // 연비 표시 - 저장된 값이 있으면 사용하고 없으면 계산
+                                      record.containsKey('fuelEfficiency')
+                                          ? '${record['fuelEfficiency'].toStringAsFixed(1)} km/L'
+                                          : '${(record['distance'] / record['amount']).toStringAsFixed(1)} km/L',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -595,9 +613,13 @@ class _MyVehicleTabState extends State<MyVehicleTab> {
                       onPressed: () async {
                         final result = await Navigator.pushNamed(context, '/fuel-record');
                         if (result == true) {
-                          await _loadData();
-                          if (mounted) { // Add mounted check
-                            setState(() {});
+                          if (mounted) {
+                            // 데이터를 완전히 새로고침
+                            setState(() => _isLoading = true);
+                            await _loadData();
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
                           }
                         }
                       },
