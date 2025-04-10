@@ -46,6 +46,11 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!_disposed) {
+        _loadRegionsFromAssets();
+      }
+    });
   }
 
   @override
@@ -68,6 +73,26 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _loadRegionsFromAssets() async {
+    if (_disposed) return;
+    try {
+      final response = await http.get(Uri.parse('https://barigaza-796a1.web.app/regions.json'));
+      if (response.statusCode != 200) {
+        debugPrint('Error fetching regions from server: ${response.statusCode}');
+        return;
+      }
+
+      if (!_disposed) {
+        setState(() {
+          // UTF-8 디코딩을 명시적으로 처리
+          _regionsData = json.decode(utf8.decode(response.bodyBytes));
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading regions: $e');
+    }
+  }
+
   void _setupMeetingsStream() {
     _meetingsSubscription?.cancel();
     _meetingsSubscription = FirebaseFirestore.instance
@@ -81,31 +106,6 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     }, onError: (error) {
       debugPrint('Error in meetings stream: $error');
     });
-  }
-
-  // 지터 효과를 적용하는 함수 추가
-  NLatLng _applyJitter(GeoPoint location, String locationKey) {
-    // 해당 위치에 몇 개의 마커가 있는지 확인
-    final meetingsAtLocation = _locationMeetingsMap[locationKey] ?? [];
-    final index = meetingsAtLocation.length;
-
-    // 지터 효과의 기본 범위 설정 (값이 클수록 마커가 더 넓게 분포)
-    const double jitterBase = 0.0001; // 대략 10미터 정도의 거리
-
-    // 마커가 많을수록 더 넓게 퍼지도록 계수 적용
-    double jitterFactor = math.min(0.5, index * 0.1); // 최대 0.5까지 제한
-
-    // 원형으로 마커를 분포시키기 위한 계산
-    double angle = (index % 8) * (math.pi / 4); // 8방향으로 분포
-    double distance = jitterBase * (1 + (index ~/ 8)); // 8개마다 거리 증가
-
-    double latOffset = distance * math.cos(angle);
-    double lngOffset = distance * math.sin(angle);
-
-    return NLatLng(
-      location.latitude + latOffset,
-      location.longitude + lngOffset,
-    );
   }
 
   // 커스텀 마커 이미지를 생성하는 함수
@@ -122,11 +122,13 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
       // 위치 기반 마커 맵 초기화
       _locationMeetingsMap.clear();
 
+      // 현재 문서 ID 세트 생성
       final Set<String> currentIds = docs.map((doc) => doc.id).toSet();
       final List<String> markersToRemove = _markersMap.keys
           .where((key) => !currentIds.contains(key))
           .toList();
 
+      // 필요 없는 마커 제거
       for (final key in markersToRemove) {
         final marker = _markersMap[key];
         if (marker != null && !_isDestroying) {
@@ -135,12 +137,13 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         }
       }
 
-      // 먼저 위치별 모임 ID 그룹화
+      // 첫 번째 패스: 위치별 모임 ID 완전히 그룹화
       for (final doc in docs) {
         if (_disposed || !_isMapReady) return;
 
         final meeting = MeetingPoint.fromFirestore(doc);
-        final locationKey = '${meeting.location.latitude},${meeting.location.longitude}';
+        // 더 정밀한 위치키 사용 (소수점 5자리까지만 사용)
+        final locationKey = '${meeting.location.latitude.toStringAsFixed(5)},${meeting.location.longitude.toStringAsFixed(5)}';
 
         if (!_locationMeetingsMap.containsKey(locationKey)) {
           _locationMeetingsMap[locationKey] = [];
@@ -148,11 +151,13 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         _locationMeetingsMap[locationKey]!.add(meeting.id);
       }
 
+      // 두 번째 패스: 각 문서에 대해 마커 생성
       for (final doc in docs) {
         if (_disposed || !_isMapReady) return;
 
         final meeting = MeetingPoint.fromFirestore(doc);
 
+        // 이미 존재하는 마커 삭제
         if (_markersMap.containsKey(meeting.id)) {
           final existingMarker = _markersMap[meeting.id]!;
           try {
@@ -166,25 +171,33 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         if (!_isMapReady || _disposed) continue;
 
         try {
-          final locationKey = '${meeting.location.latitude},${meeting.location.longitude}';
-          final jitteredPosition = _applyJitter(meeting.location, locationKey);
+          // 정밀한 위치키로 jitter 계산
+          final locationKey = '${meeting.location.latitude.toStringAsFixed(5)},${meeting.location.longitude.toStringAsFixed(5)}';
+
+          // 해당 그룹 내 위치 인덱스 계산
+          final index = _locationMeetingsMap[locationKey]!.indexOf(meeting.id);
+          final jitteredPosition = _applyJitterImproved(meeting.location, locationKey, index);
 
           // 마커 생성 (커스텀 마커 이미지 사용)
           final markerImage = await _createCustomMarkerImage(meeting.title);
+
+          // 네이버 맵에서 지원하는 기본 캡션 설정
+          final caption = NOverlayCaption(
+            text: meeting.title,
+            textSize: 14,
+            color: Colors.black,
+            haloColor: Colors.white,
+            minZoom: 10,
+            maxZoom: 20,
+          );
 
           final marker = NMarker(
             id: meeting.id,
             position: jitteredPosition,
             size: const NSize(36.0, 44.5),
             icon: markerImage,
-            caption: NOverlayCaption(
-                text: meeting.title,
-                textSize: 12,
-                color: Colors.black,
-                haloColor: Colors.white,
-                minZoom: 10,  // 줌 레벨 10 이상에서 제목 표시
-                maxZoom: 20
-            ),
+            caption: caption,
+            captionOffset: -50,
           );
 
           marker.setOnTapListener((NMarker marker) {
@@ -202,6 +215,34 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     } catch (e) {
       debugPrint('Error updating markers: $e');
     }
+  }
+
+// 스파이럴 패턴으로 마커를 분포시키는 함수
+  NLatLng _applyJitterImproved(GeoPoint location, String locationKey, int index) {
+    // 기본 설정값
+    const double jitterBase = 0.0001; // 기본 거리 스케일 (값이 작을수록 조밀한 나선)
+    const double growthFactor = 0.2;   // 나선 성장 속도 계수 (값이 클수록 빠르게 확장)
+
+    if (index == 0) {
+      // 첫 번째 마커는 중앙에 배치
+      return NLatLng(location.latitude, location.longitude);
+    }
+
+    // 스파이럴 패턴 계산
+    // 각도를 지속적으로 증가시키면서 거리도 증가
+    double angle = index * 0.5; // 회전 간격 (값이 작을수록 촘촘하게 회전)
+
+    // 아르키메데스 나선 공식 r = a + bθ
+    double distance = jitterBase * (1 + angle * growthFactor);
+
+    // 계산된 극좌표를 직교좌표로 변환
+    double latOffset = distance * math.cos(angle);
+    double lngOffset = distance * math.sin(angle);
+
+    return NLatLng(
+      location.latitude + latOffset,
+      location.longitude + lngOffset,
+    );
   }
 
   void _moveToSelectedLocation() {
