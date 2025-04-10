@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:barigaza/screens/profile_screen.dart';
-import 'package:barigaza/screens/rider_cafe_screen.dart';
-import 'package:barigaza/screens/login_screen.dart';
-import 'package:barigaza/widgets/weather_widget.dart';
-import 'package:barigaza/screens/event_page_screen.dart';
-import 'package:barigaza/screens/notifications_screen.dart';
+import '/screens/profile_screen.dart';
+import '/screens/rider_cafe_screen.dart';
+import '/screens/login_screen.dart';
+import '/widgets/weather_widget.dart';
+import '/screens/event_page_screen.dart';
+import '/screens/notifications_screen.dart';
 import '../models/event.dart';
 
 class HomeTabScreen extends StatefulWidget {

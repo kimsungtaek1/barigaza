@@ -1,4 +1,4 @@
-package com.barigaza.barigaza
+package com.barigazaofficial.barigaza
 
 import io.flutter.embedding.android.FlutterActivity
 class MainActivity: FlutterActivity() {

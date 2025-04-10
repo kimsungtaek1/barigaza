@@ -12,7 +12,20 @@
           "package_name": "com.barigaza.barigaza"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "334968888840-hi4l24qums3b6quhgctjj97g60uhqggk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.barigaza.barigaza",
+            "certificate_hash": "949c8fc6f5d359724f007ac45ebf733cefcb7832"
+          }
+        },
+        {
+          "client_id": "334968888840-9cla0f0hpn0886b4aiv0m2kdn2sqo3pe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDHoilz_NxTcOu8ZoTe5V8SNOMCdaoE71Q"
@@ -20,7 +33,55 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "334968888840-9cla0f0hpn0886b4aiv0m2kdn2sqo3pe.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "334968888840-4l0anpvndgius7sfj7l1pcdhoghfurse.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.barigazaofficial.barigaza"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:334968888840:android:5df05aa6b6259cf00c3bbd",
+        "android_client_info": {
+          "package_name": "com.barigazaofficial.barigaza"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "334968888840-9cla0f0hpn0886b4aiv0m2kdn2sqo3pe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHoilz_NxTcOu8ZoTe5V8SNOMCdaoE71Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "334968888840-9cla0f0hpn0886b4aiv0m2kdn2sqo3pe.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "334968888840-4l0anpvndgius7sfj7l1pcdhoghfurse.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.barigazaofficial.barigaza"
+              }
+            }
+          ]
         }
       }
     }
