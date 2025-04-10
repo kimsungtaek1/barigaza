@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'dart:math' as math; // 랜덤 오프셋 생성을 위해 math 라이브러리 추가
 
 import '../models/meeting_point.dart';
 import '../services/chat_service.dart';
@@ -37,15 +38,14 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
   bool _isMapReady = false;
   bool _isDestroying = false;
 
+  // 위치 기반 마커 캐싱을 위한 맵 추가
+  final Map<String, List<String>> _locationMeetingsMap = {};
+  final math.Random _random = math.Random(); // 지터 효과를 위한 랜덤 객체
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (!_disposed) {
-        _loadRegionsFromAssets();
-      }
-    });
   }
 
   @override
@@ -68,26 +68,6 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _loadRegionsFromAssets() async {
-    if (_disposed) return;
-    try {
-      final response = await http.get(Uri.parse('https://barigaza-796a1.web.app/regions.json'));
-      if (response.statusCode != 200) {
-        debugPrint('Error fetching regions from server: ${response.statusCode}');
-        return;
-      }
-      
-      if (!_disposed) {
-        setState(() {
-          // UTF-8 디코딩을 명시적으로 처리
-          _regionsData = json.decode(utf8.decode(response.bodyBytes));
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading regions: $e');
-    }
-  }
-
   void _setupMeetingsStream() {
     _meetingsSubscription?.cancel();
     _meetingsSubscription = FirebaseFirestore.instance
@@ -103,11 +83,45 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     });
   }
 
+  // 지터 효과를 적용하는 함수 추가
+  NLatLng _applyJitter(GeoPoint location, String locationKey) {
+    // 해당 위치에 몇 개의 마커가 있는지 확인
+    final meetingsAtLocation = _locationMeetingsMap[locationKey] ?? [];
+    final index = meetingsAtLocation.length;
+
+    // 지터 효과의 기본 범위 설정 (값이 클수록 마커가 더 넓게 분포)
+    const double jitterBase = 0.0001; // 대략 10미터 정도의 거리
+
+    // 마커가 많을수록 더 넓게 퍼지도록 계수 적용
+    double jitterFactor = math.min(0.5, index * 0.1); // 최대 0.5까지 제한
+
+    // 원형으로 마커를 분포시키기 위한 계산
+    double angle = (index % 8) * (math.pi / 4); // 8방향으로 분포
+    double distance = jitterBase * (1 + (index ~/ 8)); // 8개마다 거리 증가
+
+    double latOffset = distance * math.cos(angle);
+    double lngOffset = distance * math.sin(angle);
+
+    return NLatLng(
+      location.latitude + latOffset,
+      location.longitude + lngOffset,
+    );
+  }
+
+  // 커스텀 마커 이미지를 생성하는 함수
+  Future<NOverlayImage> _createCustomMarkerImage(String title) async {
+    // UI 위젯을 이미지로 변환하는 대신, 간단히 에셋 이미지 사용
+    return NOverlayImage.fromAssetImage('assets/images/marker.png');
+  }
+
   Future<void> _updateMarkers(List<QueryDocumentSnapshot> docs) async {
     if (_mapController == null || !_isMapReady || _isDestroying) {
       return;
     }
     try {
+      // 위치 기반 마커 맵 초기화
+      _locationMeetingsMap.clear();
+
       final Set<String> currentIds = docs.map((doc) => doc.id).toSet();
       final List<String> markersToRemove = _markersMap.keys
           .where((key) => !currentIds.contains(key))
@@ -119,6 +133,19 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
           await _mapController?.deleteOverlay(marker.info);
           _markersMap.remove(key);
         }
+      }
+
+      // 먼저 위치별 모임 ID 그룹화
+      for (final doc in docs) {
+        if (_disposed || !_isMapReady) return;
+
+        final meeting = MeetingPoint.fromFirestore(doc);
+        final locationKey = '${meeting.location.latitude},${meeting.location.longitude}';
+
+        if (!_locationMeetingsMap.containsKey(locationKey)) {
+          _locationMeetingsMap[locationKey] = [];
+        }
+        _locationMeetingsMap[locationKey]!.add(meeting.id);
       }
 
       for (final doc in docs) {
@@ -139,23 +166,25 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         if (!_isMapReady || _disposed) continue;
 
         try {
+          final locationKey = '${meeting.location.latitude},${meeting.location.longitude}';
+          final jitteredPosition = _applyJitter(meeting.location, locationKey);
+
+          // 마커 생성 (커스텀 마커 이미지 사용)
+          final markerImage = await _createCustomMarkerImage(meeting.title);
+
           final marker = NMarker(
             id: meeting.id,
-            position: NLatLng(
-              meeting.location.latitude,
-              meeting.location.longitude,
-            ),
+            position: jitteredPosition,
             size: const NSize(36.0, 44.5),
-            icon: NOverlayImage.fromAssetImage('assets/images/marker.png')
-          );
-
-          final String formattedText = _formatMeetingInfo(meeting);
-
-          if (!_isMapReady || _disposed) continue;
-
-          final infoWindow = NInfoWindow.onMarker(
-            id: 'info_${meeting.id}',
-            text: formattedText,
+            icon: markerImage,
+            caption: NOverlayCaption(
+                text: meeting.title,
+                textSize: 12,
+                color: Colors.black,
+                haloColor: Colors.white,
+                minZoom: 10,  // 줌 레벨 10 이상에서 제목 표시
+                maxZoom: 20
+            ),
           );
 
           marker.setOnTapListener((NMarker marker) {
@@ -164,89 +193,15 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
 
           if (!_disposed && _isMapReady) {
             await _mapController!.addOverlay(marker);
-            await Future.delayed(const Duration(milliseconds: 100));
-            if (!_disposed && _isMapReady) {
-              marker.openInfoWindow(infoWindow);
-              _markersMap[meeting.id] = marker;
-            }
+            _markersMap[meeting.id] = marker;
           }
         } catch (e) {
-          debugPrint('Error creating marker/infoWindow: $e');
+          debugPrint('Error creating marker: $e');
         }
       }
     } catch (e) {
       debugPrint('Error updating markers: $e');
     }
-  }
-
-  String _wrapText(String text, int maxChars) {
-    final buffer = StringBuffer();
-    for (int i = 0; i < text.length; i += maxChars) {
-      final int end = (i + maxChars < text.length) ? i + maxChars : text.length;
-      buffer.write(text.substring(i, end));
-      if (end < text.length) {
-        buffer.write('\n');
-      }
-    }
-    return buffer.toString();
-  }
-
-  // _formatMeetingInfo 함수에서 각 줄이 20글자(띄어쓰기 포함)를 넘으면 줄바꿈하도록 변경
-  String _formatMeetingInfo(MeetingPoint meeting) {
-    final buffer = StringBuffer();
-    final meetingTimeStr = DateFormat('yy년MM월dd일 HH시mm분').format(meeting.meetingTime);
-    buffer.writeln('시간: $meetingTimeStr');
-
-    // 접두사 포함 전체 문자열을 대상으로 wrapping
-    final wrappedDeparture = _wrapText('출발지: ${meeting.departureAddress} ${meeting.departureDetailAddress}', 20);
-    buffer.writeln(wrappedDeparture);
-
-    final wrappedDestination = _wrapText('목적지: ${meeting.destinationAddress} ${meeting.destinationDetailAddress}', 20);
-    buffer.writeln(wrappedDestination);
-
-    return buffer.toString();
-  }
-
-  Future<GeoPoint?> getCoordinatesFromAddress(String address) async {
-    try {
-      final String apiUrl = 'https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode';
-      final Uri url = Uri.parse('$apiUrl?query=${Uri.encodeComponent(address)}');
-      debugPrint("getCoordinatesFromAddress: Request URL: $url");
-
-      final response = await http.get(
-        url,
-        headers: {
-          'X-NCP-APIGW-API-KEY-ID': '5k1r2vy3lz', // 본인의 API Key ID로 교체
-          'X-NCP-APIGW-API-KEY': 'W6McBwHf5CFEVZpfz1DSuc2DdzTNC8Ks0l1paU4P', // 본인의 API Key로 교체
-        },
-      );
-
-      debugPrint("getCoordinatesFromAddress: Response status: ${response.statusCode}");
-      debugPrint("getCoordinatesFromAddress: Response body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['addresses'] != null && data['addresses'].isNotEmpty) {
-          final location = data['addresses'][0];
-          final double? y = double.tryParse(location['y']);
-          final double? x = double.tryParse(location['x']);
-          if (y == null || x == null) {
-            debugPrint("getCoordinatesFromAddress: Parsing error: y=$y, x=$x");
-            return null;
-          }
-          debugPrint("getCoordinatesFromAddress: Parsed coordinates: GeoPoint($y, $x)");
-          return GeoPoint(y, x);
-        } else {
-          debugPrint("getCoordinatesFromAddress: No addresses found in response.");
-        }
-      } else {
-        debugPrint("getCoordinatesFromAddress: Non-200 status code: ${response.statusCode}");
-      }
-    } catch (e, stackTrace) {
-      debugPrint("getCoordinatesFromAddress: Exception occurred: $e");
-      debugPrint("Stack trace: $stackTrace");
-    }
-    return null;
   }
 
   void _moveToSelectedLocation() {
@@ -704,7 +659,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                           },
                         ),
                         SizedBox(height: 32),
-                        
+
                         // 출발지
                         TextFormField(
                           controller: departureAddressController,
@@ -750,7 +705,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                           },
                         ),
                         SizedBox(height: 8),
-                      
+
                         // 출발지 상세주소
                         TextFormField(
                           controller: departureDetailAddressController,
@@ -776,7 +731,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                           ),
                         ),
                         SizedBox(height: 32),
-                        
+
                         // 목적지
                         TextFormField(
                           controller: destinationAddressController,
@@ -822,7 +777,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                           },
                         ),
                         SizedBox(height: 8),
-                      
+
                         // 목적지 상세주소
                         TextFormField(
                           controller: destinationDetailAddressController,
@@ -847,160 +802,160 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                             fillColor: Colors.white,
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFE5E7EB),
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(16),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            '취소',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                            child: Text(
+                              '취소',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          if (titleController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('모임 제목을 입력해주세요.')),
-                            );
-                            return;
-                          }
-                          if (departureAddressController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('출발지를 선택해주세요.')),
-                            );
-                            return;
-                          }
-                          if (destinationAddressController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('목적지를 선택해주세요.')),
-                            );
-                            return;
-                          }
-                          if (selectedTime == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('시간을 선택해주세요.')),
-                            );
-                            return;
-                          }
-                          if (selectedTime!.isBefore(DateTime.now())) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('현재 시간 이후로 선택해주세요.')),
-                            );
-                            return;
-                          }
-                          try {
-                            selectedLocation =
-                            await getCoordinatesFromAddress(departureAddressController.text);
-                            if (selectedLocation == null) {
-                              if (!mounted) return;
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            if (titleController.text.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('출발지 주소를 좌표로 변환하는데 실패했습니다.')),
+                                const SnackBar(content: Text('모임 제목을 입력해주세요.')),
                               );
                               return;
                             }
-                            // 사용자 닉네임 가져오기
-                            final userDoc = await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(user.uid)
-                                .get();
-
-                            final userNickname = userDoc['nickname'] ?? '알 수 없음';
-
-                            final newMeeting = {
-                              'title': titleController.text,
-                              'hostId': user.uid,
-                              'hostName': userNickname, // Firestore에서 가져온 닉네임 사용
-                              'departureAddress': departureAddressController.text,
-                              'departureDetailAddress': departureDetailAddressController.text,
-                              'destinationAddress': destinationAddressController.text,
-                              'destinationDetailAddress': destinationDetailAddressController.text,
-                              'meetingTime': Timestamp.fromDate(selectedTime!),
-                              'location': selectedLocation,
-                              'participants': [user.uid],
-                              'status': 'active',
-                              'createdAt': Timestamp.now(),
-                            };
-
-                            await FirebaseFirestore.instance.runTransaction((transaction) async {
-                              final meetingRef = await FirebaseFirestore.instance
-                                  .collection('meetings')
-                                  .add(newMeeting);
-
-                              final chatId = await _chatService.createGroupChatRoom(
-                                [user.uid],
-                                titleController.text,
-                                meetingId: meetingRef.id,
+                            if (departureAddressController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('출발지를 선택해주세요.')),
                               );
+                              return;
+                            }
+                            if (destinationAddressController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('목적지를 선택해주세요.')),
+                              );
+                              return;
+                            }
+                            if (selectedTime == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('시간을 선택해주세요.')),
+                              );
+                              return;
+                            }
+                            if (selectedTime!.isBefore(DateTime.now())) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('현재 시간 이후로 선택해주세요.')),
+                              );
+                              return;
+                            }
+                            try {
+                              selectedLocation =
+                              await getCoordinatesFromAddress(departureAddressController.text);
+                              if (selectedLocation == null) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('출발지 주소를 좌표로 변환하는데 실패했습니다.')),
+                                );
+                                return;
+                              }
+                              // 사용자 닉네임 가져오기
+                              final userDoc = await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(user.uid)
+                                  .get();
 
-                              transaction.update(meetingRef, {
-                                'chatRoomId': chatId
+                              final userNickname = userDoc['nickname'] ?? '알 수 없음';
+
+                              final newMeeting = {
+                                'title': titleController.text,
+                                'hostId': user.uid,
+                                'hostName': userNickname, // Firestore에서 가져온 닉네임 사용
+                                'departureAddress': departureAddressController.text,
+                                'departureDetailAddress': departureDetailAddressController.text,
+                                'destinationAddress': destinationAddressController.text,
+                                'destinationDetailAddress': destinationDetailAddressController.text,
+                                'meetingTime': Timestamp.fromDate(selectedTime!),
+                                'location': selectedLocation,
+                                'participants': [user.uid],
+                                'status': 'active',
+                                'createdAt': Timestamp.now(),
+                              };
+
+                              await FirebaseFirestore.instance.runTransaction((transaction) async {
+                                final meetingRef = await FirebaseFirestore.instance
+                                    .collection('meetings')
+                                    .add(newMeeting);
+
+                                final chatId = await _chatService.createGroupChatRoom(
+                                  [user.uid],
+                                  titleController.text,
+                                  meetingId: meetingRef.id,
+                                );
+
+                                transaction.update(meetingRef, {
+                                  'chatRoomId': chatId
+                                });
                               });
-                            });
 
-                            if (!mounted) return;
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('모임이 성공적으로 생성되었습니다.'),
-                                backgroundColor: Colors.green,
+                              if (!mounted) return;
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('모임이 성공적으로 생성되었습니다.'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } catch (e) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('모임 생성 중 오류가 발생했습니다: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.only(
+                                bottomRight: Radius.circular(16),
                               ),
-                            );
-                          } catch (e) {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('모임 생성 중 오류가 발생했습니다: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            borderRadius: BorderRadius.only(
-                              bottomRight: Radius.circular(16),
                             ),
-                          ),
-                          child: Text(
-                            '저장',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                            child: Text(
+                              '저장',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
   void _showMeetingDetail(MeetingPoint meeting) {
@@ -1024,5 +979,47 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         MaterialPageRoute(builder: (context) => screen),
       );
     }
+  }
+
+  Future<GeoPoint?> getCoordinatesFromAddress(String address) async {
+    try {
+      final String apiUrl = 'https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode';
+      final Uri url = Uri.parse('$apiUrl?query=${Uri.encodeComponent(address)}');
+      debugPrint("getCoordinatesFromAddress: Request URL: $url");
+
+      final response = await http.get(
+        url,
+        headers: {
+          'X-NCP-APIGW-API-KEY-ID': '5k1r2vy3lz', // 본인의 API Key ID로 교체
+          'X-NCP-APIGW-API-KEY': 'W6McBwHf5CFEVZpfz1DSuc2DdzTNC8Ks0l1paU4P', // 본인의 API Key로 교체
+        },
+      );
+
+      debugPrint("getCoordinatesFromAddress: Response status: ${response.statusCode}");
+      debugPrint("getCoordinatesFromAddress: Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['addresses'] != null && data['addresses'].isNotEmpty) {
+          final location = data['addresses'][0];
+          final double? y = double.tryParse(location['y']);
+          final double? x = double.tryParse(location['x']);
+          if (y == null || x == null) {
+            debugPrint("getCoordinatesFromAddress: Parsing error: y=$y, x=$x");
+            return null;
+          }
+          debugPrint("getCoordinatesFromAddress: Parsed coordinates: GeoPoint($y, $x)");
+          return GeoPoint(y, x);
+        } else {
+          debugPrint("getCoordinatesFromAddress: No addresses found in response.");
+        }
+      } else {
+        debugPrint("getCoordinatesFromAddress: Non-200 status code: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      debugPrint("getCoordinatesFromAddress: Exception occurred: $e");
+      debugPrint("Stack trace: $stackTrace");
+    }
+    return null;
   }
 }
