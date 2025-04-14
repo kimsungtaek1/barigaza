@@ -34,7 +34,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace "com.barigazaofficial.barigaza"
+    namespace "com.bari.barigaza"
     compileSdkVersion 34
     ndkVersion flutter.ndkVersion
 
@@ -74,7 +74,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.barigazaofficial.barigaza"
+        applicationId "com.bari.barigaza"
         minSdkVersion 23
         targetSdkVersion 34
         targetSdkVersion flutter.targetSdkVersion
