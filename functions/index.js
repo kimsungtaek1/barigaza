@@ -34,10 +34,12 @@ exports.checkExpiredMeetings = onSchedule({
         const meetingTime = data.meetingTime.toDate();
         
         // 모임 종료 시간 계산 (모임 시작 시간 + 3시간으로 가정)
-        const meetingEndTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000));
-        
-        // 최종 만료 시간 계산 (모임 종료 + 3시간)
-        const finalExpiryTime = new Date(meetingEndTime.getTime() + (3 * 60 * 60 * 1000));
+		//const meetingEndTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000));
+		const meetingEndTime = new Date(meetingTime.getTime() + (1 * 60 * 1000)); //테스트용
+		
+		// 최종 만료 시간 계산 (모임 종료 + 3시간)
+		//const finalExpiryTime = new Date(meetingEndTime.getTime() + (3 * 60 * 60 * 1000));
+		const finalExpiryTime = new Date(meetingEndTime.getTime() + (1* 60 * 1000)); //테스트용
         
         // 만료 시간이 현재보다 이전이면 상태 업데이트
         if (finalExpiryTime <= now.toDate()) {
@@ -116,10 +118,12 @@ exports.onMeetingCreated = onDocumentCreated({
     const meetingTime = meetingData.meetingTime.toDate();
     
     // 모임 종료 시간 계산 (모임 시작 시간 + 3시간으로 가정)
-    const meetingEndTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000));
+	//const meetingEndTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000));
+	const meetingEndTime = new Date(meetingTime.getTime() + (1 * 60 * 1000)); //테스트용
     
     // 최종 만료 시간 계산 (모임 종료 + 3시간)
-    const finalExpiryTime = new Date(meetingEndTime.getTime() + (3 * 60 * 60 * 1000));
+    //const finalExpiryTime = new Date(meetingEndTime.getTime() + (3 * 60 * 60 * 1000));
+	const finalExpiryTime = new Date(meetingEndTime.getTime() + (1* 60 * 1000)); //테스트용
     
     // 현재 시간이 이미 최종 만료 시간을 지났는지 확인
     const now = new Date();
