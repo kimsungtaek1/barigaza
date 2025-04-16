@@ -30,12 +30,17 @@ exports.checkExpiredMeetings = onSchedule({
     meetingsSnapshot.docs.forEach((doc) => {
       const data = doc.data();
       if (data.meetingTime) {
-        // 모임 시간 + 3시간 계산
+        // 모임 시간(시작 시간)
         const meetingTime = data.meetingTime.toDate();
-        const expiryTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000)); // 3시간 추가
+        
+        // 모임 종료 시간 계산 (모임 시작 시간 + 3시간으로 가정)
+        const meetingEndTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000));
+        
+        // 최종 만료 시간 계산 (모임 종료 + 3시간)
+        const finalExpiryTime = new Date(meetingEndTime.getTime() + (3 * 60 * 60 * 1000));
         
         // 만료 시간이 현재보다 이전이면 상태 업데이트
-        if (expiryTime <= now.toDate()) {
+        if (finalExpiryTime <= now.toDate()) {
           batch.update(doc.ref, {
             status: 'completed',
             completedAt: now,
@@ -107,13 +112,18 @@ exports.onMeetingCreated = onDocumentCreated({
   }
   
   try {
-    // 모임 시간 + 3시간 계산
+    // 모임 시간(시작 시간)
     const meetingTime = meetingData.meetingTime.toDate();
-    const expiryTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000));
     
-    // 현재 시간이 이미 만료 시간을 지났는지 확인
+    // 모임 종료 시간 계산 (모임 시작 시간 + 3시간으로 가정)
+    const meetingEndTime = new Date(meetingTime.getTime() + (3 * 60 * 60 * 1000));
+    
+    // 최종 만료 시간 계산 (모임 종료 + 3시간)
+    const finalExpiryTime = new Date(meetingEndTime.getTime() + (3 * 60 * 60 * 1000));
+    
+    // 현재 시간이 이미 최종 만료 시간을 지났는지 확인
     const now = new Date();
-    if (expiryTime <= now) {
+    if (finalExpiryTime <= now) {
       // 이미 만료되었다면 바로 상태 업데이트
       await admin.firestore().collection('meetings').doc(meetingId).update({
         status: 'completed',
@@ -124,7 +134,7 @@ exports.onMeetingCreated = onDocumentCreated({
       logger.log(`Meeting ${meetingId} already expired, updated immediately`);
     } else {
       // 아직 만료되지 않았다면 기록만 남김 (실제 업데이트는 스케줄링된 함수에서 수행)
-      logger.log(`Scheduled meeting ${meetingId} to expire at ${expiryTime}`);
+      logger.log(`Meeting ${meetingId} will expire at ${finalExpiryTime} (3 hours after meeting end)`);
     }
     
     return null;
