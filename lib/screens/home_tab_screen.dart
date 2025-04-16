@@ -183,6 +183,13 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   // 6. 인증 화면 네비게이션
   void _navigateToAuthScreen(Widget screen) async {
     final user = FirebaseAuth.instance.currentUser;
+    // 사용자 정보 로그 출력
+    debugPrint('=========== 현재 사용자 정보 ===========');
+    debugPrint('로그인 상태: ${user != null}');
+    debugPrint('사용자 UID: ${user?.uid}');
+    debugPrint('사용자 이메일: ${user?.email}');
+    debugPrint('사용자 표시 이름: ${user?.displayName}');
+    debugPrint('=======================================');
     if (user == null) {
       // 직접 로그인 화면으로 이동
       await Navigator.push(

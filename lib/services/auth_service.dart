@@ -81,9 +81,27 @@ class AuthService with ChangeNotifier {
 
   // 로그아웃
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
-    notifyListeners();
+    debugPrint('로그아웃 시작');
+    try {
+      // 구글 로그인 세션 종료
+      await _googleSignIn.signOut();
+      debugPrint('구글 로그아웃 완료');
+
+      // Firebase 로그아웃
+      await _auth.signOut();
+      debugPrint('Firebase 로그아웃 완료');
+
+      // 추가 정리 (캐시 삭제 등)
+      await FirebaseAuth.instance.signOut(); // 명시적으로 다시 호출
+
+      notifyListeners();
+      debugPrint('로그아웃 완료');
+    } catch (e) {
+      debugPrint('로그아웃 오류: $e');
+      // 오류가 발생해도 알림
+      notifyListeners();
+      throw e;
+    }
   }
 
   // 재인증 메서드
@@ -181,27 +199,45 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  // 회원 탈퇴 (통합 메서드)
   Future<void> deleteAccount({String? password}) async {
-    User? user = _auth.currentUser;
-    if (user == null) throw '로그인 상태가 아닙니다.';
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        // 재인증이 필요한 경우를 대비하여 password가 제공되었다면 재인증 수행
+        if (password != null && user.email != null) {
+          // 이메일/비밀번호 자격 증명 생성
+          AuthCredential credential = EmailAuthProvider.credential(
+            email: user.email!,
+            password: password,
+          );
 
-    // 로그인 제공자 확인
-    final isEmailUser = user.providerData.any((element) =>
-    element.providerId == 'password');
+          try {
+            // 사용자 재인증
+            await user.reauthenticateWithCredential(credential);
+            debugPrint('사용자 재인증 성공');
+          } catch (e) {
+            debugPrint('재인증 실패: $e');
+            throw '비밀번호가 일치하지 않습니다. 정확한 비밀번호를 입력해주세요.';
+          }
+        }
 
-    final isGoogleUser = user.providerData.any((element) =>
-    element.providerId == 'google.com');
+        // Firestore에서 사용자 데이터 삭제
+        await _firestore.collection('users').doc(user.uid).delete();
 
-    if (isEmailUser) {
-      if (password == null) {
-        throw '이메일 계정 삭제를 위해서는 비밀번호가 필요합니다.';
+        // Firebase Auth에서 사용자 계정 삭제
+        await user.delete();
+
+        // 로그아웃 처리
+        await signOut();
       }
-      await deleteEmailAccount(password);
-    } else if (isGoogleUser) {
-      await deleteGoogleAccount();
-    } else {
-      throw '지원하지 않는 로그인 방식입니다.';
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        // 민감한 작업을 수행하기 위해 재인증이 필요한 경우
+        throw '보안을 위해 다시 로그인한 후 시도해주세요.';
+      }
+      throw '계정 삭제 중 오류가 발생했습니다: ${e.message}';
+    } catch (e) {
+      throw '계정 삭제 중 오류가 발생했습니다: $e';
     }
   }
 

@@ -346,6 +346,9 @@ class _ProfileScreenState extends State<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+            ),
             child: Text('취소'),
           ),
           TextButton(
@@ -354,6 +357,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 Navigator.of(context).pop(controller.text);
               }
             },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+            ),
             child: Text('확인'),
           ),
         ],

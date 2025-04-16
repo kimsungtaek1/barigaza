@@ -489,7 +489,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  /// 회원가입 처리 (전화번호 인증 후 이메일/비밀번호 계정 생성 및 Firestore 저장)
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -514,7 +513,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'name': _nameController.text,
           'nickname': _nickController.text,
           'phone': _phoneController.text,
-          'gender': _selectedGender, // 선택 사항이므로 null 가능
+          'gender': _selectedGender ?? "",
           'role': 'normal', // 기본 역할 지정
           'isPhoneVerified': _isPhoneVerified,
           'createdAt': FieldValue.serverTimestamp(),
@@ -543,8 +542,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             'name': _nameController.text,
             'nickname': _nickController.text,
             'phone': _phoneController.text,
-            'gender': _selectedGender, // 선택 사항이므로 null 가능
-            'role': 'normal',
+            'gender': _selectedGender ?? "", // 선택하지 않았을 경우 빈 문자열로 처리
+            'role': 'normal', // 기본 역할 지정
             'isPhoneVerified': _isPhoneVerified,
             'createdAt': FieldValue.serverTimestamp(),
             'lastActive': FieldValue.serverTimestamp(),
@@ -559,7 +558,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             'name': _nameController.text,
             'nickname': _nickController.text,
             'phone': _phoneController.text,
-            'gender': _selectedGender, // 선택 사항이므로 null 가능
+            'gender': _selectedGender ?? "",
             'role': 'normal',
             'isPhoneVerified': _isPhoneVerified,
             'createdAt': FieldValue.serverTimestamp(),

@@ -103,7 +103,7 @@ service cloud.firestore {
                data.nickname is string &&
                data.name is string &&
                data.phone is string &&
-               data.gender is string &&
+               (!data.keys().hasAny(['gender']) || data.gender is string) &&
                data.role is string &&
                data.uid is string &&
                data.isPhoneVerified is bool &&
