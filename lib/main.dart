@@ -29,6 +29,7 @@ import 'services/auth_service.dart';
 import 'services/event_service.dart';
 import 'services/content_filter_service.dart';
 import 'widgets/customColor.dart';
+import 'services/meeting_service.dart';
 
 // 상수 정의
 const String NAVER_CLIENT_ID = '5k1r2vy3lz';
@@ -83,6 +84,12 @@ Future<void> initializeApp() async {
       clientId: NAVER_CLIENT_ID,
       onAuthFailed: (error) => debugPrint('네이버 지도 초기화 실패: $error'),
     );
+
+    // 만료된 이벤트 체크
+    await EventService().checkExpiredEvents();
+
+    // 만료된 번개모임 체크
+    await MeetingService().checkExpiredMeetings();
 
     // AdMob 초기화
     await MobileAds.instance.initialize();
