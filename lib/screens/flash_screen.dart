@@ -114,7 +114,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         .collection('meetings')
         .where('status', isEqualTo: 'active') // 상태가 active인 모임만 필터링
         .orderBy('createdAt', descending: true)
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .listen((snapshot) {
       if (!_disposed && _isMapReady) {
         _updateMarkers(snapshot.docs);
