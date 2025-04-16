@@ -79,8 +79,12 @@ class _ProfileScreenState extends State<ProfileScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (await AuthUtils.checkLoginAndShowAlert(context)) {
         await _loadUserData();
+      } else {
+        // 로그인되지 않은 경우 로딩 상태 해제
         if (mounted) {
-          setState(() {});
+          setState(() {
+            _isLoading = false;
+          });
         }
       }
     });
@@ -234,6 +238,16 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<void> _handleDeleteAccount() async {
+    // 로그인 제공자 확인
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final isEmailUser = user.providerData.any((element) =>
+    element.providerId == 'password');
+
+    final isGoogleUser = user.providerData.any((element) =>
+    element.providerId == 'google.com');
+
     // 회원 탈퇴 확인 다이얼로그
     final bool? confirm = await showDialog<bool>(
       context: context,
@@ -258,7 +272,29 @@ class _ProfileScreenState extends State<ProfileScreen>
     try {
       setState(() => _isLoading = true);
       final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.deleteAccount();
+
+      // 이메일 사용자인 경우 비밀번호 재인증 필요
+      if (isEmailUser) {
+        // 비밀번호 입력 다이얼로그
+        final password = await _showPasswordDialog();
+        if (password == null || password.isEmpty) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('비밀번호를 입력해야 탈퇴할 수 있습니다')),
+          );
+          return;
+        }
+
+        await authService.deleteAccount(password: password);
+      }
+      // 구글 사용자인 경우
+      else if (isGoogleUser) {
+        await authService.deleteAccount();
+      }
+      // 기타 제공자
+      else {
+        throw '지원하지 않는 로그인 방식입니다.';
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('계정이 성공적으로 삭제되었습니다')),
@@ -271,6 +307,58 @@ class _ProfileScreenState extends State<ProfileScreen>
         SnackBar(content: Text(e.toString())),
       );
     }
+  }
+
+// 비밀번호 입력 다이얼로그 표시 메서드 추가
+  Future<String?> _showPasswordDialog() async {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('본인 확인'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('계정 삭제를 위해 비밀번호를 입력해주세요.'),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: controller,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: '비밀번호',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '비밀번호를 입력해주세요';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.of(context).pop(controller.text);
+              }
+            },
+            child: Text('확인'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildProfileInfo() {

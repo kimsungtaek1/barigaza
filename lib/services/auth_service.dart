@@ -86,24 +86,62 @@ class AuthService with ChangeNotifier {
     notifyListeners();
   }
 
-  // 회원 탈퇴
-  Future<void> deleteAccount() async {
+  // 재인증 메서드
+  Future<UserCredential> reauthenticateUser(String password) async {
+    User? user = _auth.currentUser;
+    if (user == null) throw '로그인 상태가 아닙니다.';
+
+    // 이메일 제공자인 경우
+    if (user.providerData.any((element) => element.providerId == 'password')) {
+      // 사용자의 이메일로 EmailAuthCredential 생성
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      return await user.reauthenticateWithCredential(credential);
+    }
+    // Google 로그인인 경우
+    else if (user.providerData.any((element) => element.providerId == 'google.com')) {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) throw '구글 로그인에 실패했습니다.';
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      return await user.reauthenticateWithCredential(credential);
+    } else {
+      throw '지원하지 않는 로그인 방식입니다.';
+    }
+  }
+
+  // 회원 탈퇴 (이메일 계정용)
+  Future<void> deleteEmailAccount(String password) async {
     try {
       User? user = _auth.currentUser;
-      if (user != null) {
-        // Firestore에서 사용자 데이터 삭제
-        await _firestore.collection('users').doc(user.uid).delete();
-        
-        // Firebase Auth에서 사용자 계정 삭제
-        await user.delete();
-        
-        // 로그아웃 처리
-        await signOut();
-      }
+      if (user == null) throw '로그인 상태가 아닙니다.';
+
+      // 1. 사용자 재인증
+      await reauthenticateUser(password);
+
+      // 2. Firestore에서 사용자 데이터 삭제
+      await _firestore.collection('users').doc(user.uid).delete();
+
+      // 3. Firebase Auth에서 사용자 계정 삭제
+      await user.delete();
+
+      // 4. 로그아웃 처리
+      await signOut();
+
+      notifyListeners();
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
-        // 민감한 작업을 수행하기 위해 재인증이 필요한 경우
+        // 이 에러는 이제 발생하지 않아야 함 (재인증을 먼저 수행했기 때문)
         throw '보안을 위해 다시 로그인한 후 시도해주세요.';
+      } else if (e.code == 'wrong-password') {
+        throw '비밀번호가 올바르지 않습니다.';
       }
       throw '계정 삭제 중 오류가 발생했습니다: ${e.message}';
     } catch (e) {
@@ -111,13 +149,70 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  // 회원 탈퇴 (Google 계정용)
+  Future<void> deleteGoogleAccount() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) throw '로그인 상태가 아닙니다.';
+
+      // Google 로그인 사용자인지 확인
+      bool isGoogleUser = user.providerData.any((element) =>
+      element.providerId == 'google.com');
+
+      if (!isGoogleUser) {
+        throw '구글 계정으로 로그인한 사용자가 아닙니다.';
+      }
+
+      // 1. Google 재인증 시도
+      await reauthenticateUser('');  // 비밀번호는 사용하지 않음
+
+      // 2. Firestore에서 사용자 데이터 삭제
+      await _firestore.collection('users').doc(user.uid).delete();
+
+      // 3. Firebase Auth에서 사용자 계정 삭제
+      await user.delete();
+
+      // 4. 로그아웃 처리
+      await signOut();
+
+      notifyListeners();
+    } catch (e) {
+      throw '계정 삭제 중 오류가 발생했습니다: $e';
+    }
+  }
+
+  // 회원 탈퇴 (통합 메서드)
+  Future<void> deleteAccount({String? password}) async {
+    User? user = _auth.currentUser;
+    if (user == null) throw '로그인 상태가 아닙니다.';
+
+    // 로그인 제공자 확인
+    final isEmailUser = user.providerData.any((element) =>
+    element.providerId == 'password');
+
+    final isGoogleUser = user.providerData.any((element) =>
+    element.providerId == 'google.com');
+
+    if (isEmailUser) {
+      if (password == null) {
+        throw '이메일 계정 삭제를 위해서는 비밀번호가 필요합니다.';
+      }
+      await deleteEmailAccount(password);
+    } else if (isGoogleUser) {
+      await deleteGoogleAccount();
+    } else {
+      throw '지원하지 않는 로그인 방식입니다.';
+    }
+  }
+
+  // 회원가입 (상세 정보 포함)
   Future<UserCredential?> signUp({
     required String email,
     required String password,
     required String nickname,
     required String name,
     required String phone,
-    String? gender, 
+    String? gender,
     required String role,
   }) async {
     try {
