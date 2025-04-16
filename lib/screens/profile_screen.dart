@@ -232,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       );
     }
   }
-  
+
   Future<void> _handleDeleteAccount() async {
     // 회원 탈퇴 확인 다이얼로그
     final bool? confirm = await showDialog<bool>(
@@ -252,14 +252,14 @@ class _ProfileScreenState extends State<ProfileScreen>
         ],
       ),
     );
-    
+
     if (confirm != true) return;
-    
+
     try {
       setState(() => _isLoading = true);
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.deleteAccount();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('계정이 성공적으로 삭제되었습니다')),
       );
@@ -291,10 +291,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       backgroundImage: _tempProfileImage != null
                           ? FileImage(File(_tempProfileImage!))
                           : (_userData['profileImage'] != null
-                              ? NetworkImage(_userData['profileImage'])
-                              : null) as ImageProvider?,
+                          ? NetworkImage(_userData['profileImage'])
+                          : null) as ImageProvider?,
                       child: (_tempProfileImage == null &&
-                              _userData['profileImage'] == null)
+                          _userData['profileImage'] == null)
                           ? Icon(Icons.person, size: 40, color: Colors.grey)
                           : null,
                     ),
@@ -363,7 +363,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   // 날짜 포맷 도우미 함수 - 항상 YYYY.MM.DD 형식으로 출력
   String _formatDate(dynamic timestamp) {
     if (timestamp == null) return '날짜 없음';
-    
+
     try {
       DateTime dateTime;
       if (timestamp is Timestamp) {
@@ -383,7 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           }
         }
       }
-      
+
       // 항상 YYYY.MM.DD 형식으로 반환
       return '${dateTime.year}.${dateTime.month.toString().padLeft(2, '0')}.${dateTime.day.toString().padLeft(2, '0')}';
     } catch (e) {
@@ -399,7 +399,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       color: isSelected ? const Color(0xFF2F6DF3) : Colors.grey,
       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
     );
-    
+
     return InkWell( // GestureDetector 대신 InkWell 사용 (더 나은 터치 반응성)
       onTap: () {
         if (_tabController.index != index) {
@@ -459,13 +459,13 @@ class _ProfileScreenState extends State<ProfileScreen>
           itemBuilder: (context, index) {
             final chatRoom = chatRooms[index];
             final data = chatRoom.data() as Map<String, dynamic>;
-            
+
             // 채팅방 제목 결정 로직
             String chatTitle = '채팅방';
             // 그룹 채팅인 경우
             if (data['isGroupChat'] == true) {
               chatTitle = data['groupName'] ?? '그룹 채팅';
-            } 
+            }
             // 1:1 채팅인 경우
             else {
               if (data['userDetails'] != null) {
@@ -478,10 +478,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                 });
               }
             }
-            
+
             // 참여자 수 계산
             final participantsCount = (data['users'] as List?)?.length ?? 0;
-            
+
             return Card(
               margin: EdgeInsets.only(bottom: 16),
               elevation: 3,
@@ -513,8 +513,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                             child: Text(
                               chatTitle,
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -523,9 +523,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           Text(
                             '참여자 $participantsCount명',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500
                             ),
                           ),
                         ],
@@ -534,8 +534,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                       Text(
                         '최근 메시지: ${data['lastMessage'] ?? '메시지 없음'}',
                         style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600]
+                            fontSize: 13,
+                            color: Colors.grey[600]
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -584,7 +584,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           itemBuilder: (context, index) {
             final post = posts[index];
             final data = post.data() as Map<String, dynamic>;
-            
+
             return Card(
               margin: EdgeInsets.only(bottom: 16),
               elevation: 3,
@@ -651,9 +651,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           Text(
                             '조회 ${data['viewCount'] ?? 0}',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500
                             ),
                           ),
                         ],
@@ -797,99 +797,109 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            physics: AlwaysScrollableScrollPhysics(),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      '참여중인 채팅방',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    GestureDetector(
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => ChatListScreen()),
-                                      ),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        child: const Row(
-                                          children: [
-                                            Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                                            SizedBox(width: 2),
-                                            Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
-                                          ],
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: AlwaysScrollableScrollPhysics(),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '참여중인 채팅방',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 4),
-                                  child: _buildMeetingsList(),
-                                ),
-                                SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Text(
-                                      '작성글',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      child: const Text('최근 5개', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 4),
-                                  child: _buildPostsList(),
-                                ),
-                                SizedBox(height: 32), // 게시글 목록과 탈퇴 버튼 사이 간격
-                                // 회원 탈퇴 버튼 (최하단으로 이동)
-                                InkWell(
-                                  onTap: _handleDeleteAccount,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(vertical: 16), // 상하 패딩 추가
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end, // 우측 정렬로 변경
-                                      children: [
-                                        Icon(Icons.delete_forever, color: Colors.red[300], size: 20),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          '회원 탈퇴',
-                                          style: TextStyle(
-                                            color: Colors.red[300],
-                                            fontSize: 14,
+                                      Spacer(),
+                                      GestureDetector(
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => ChatListScreen()),
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              const Text('더보기',
+                                                style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                                              ),
+                                              const SizedBox(width: 2),
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
+                                                child: const Icon(Icons.keyboard_arrow_right,
+                                                    size: 14,
+                                                    color: Color(0xFF6B7280)
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 4),
+                                    child: _buildMeetingsList(),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '작성글',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        child: const Text('최근 5개', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 4),
+                                    child: _buildPostsList(),
+                                  ),
+                                  SizedBox(height: 32), // 게시글 목록과 탈퇴 버튼 사이 간격
+                                  // 회원 탈퇴 버튼 (최하단으로 이동)
+                                  InkWell(
+                                    onTap: _handleDeleteAccount,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(vertical: 16), // 상하 패딩 추가
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end, // 우측 정렬로 변경
+                                        children: [
+                                          Icon(Icons.delete_forever, color: Colors.red[300], size: 20),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            '회원 탈퇴',
+                                            style: TextStyle(
+                                              color: Colors.red[300],
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(height: 16), // 하단 여백
-                              ],
+                                  SizedBox(height: 16), // 하단 여백
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                // 내 차량 탭
+                  // 내 차량 탭
                   MyVehicleTab(),
                 ],
               ),

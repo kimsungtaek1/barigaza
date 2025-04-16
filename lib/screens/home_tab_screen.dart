@@ -87,7 +87,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         setState(() {
           final adminArea = place.administrativeArea ?? '';
           final locality = place.locality ?? '';
-          
+
           // 중복 방지: adminArea와 locality가 같으면 하나만 표시
           if (adminArea.isNotEmpty && locality.isNotEmpty && adminArea == locality) {
             _currentAddress = adminArea;
@@ -212,21 +212,21 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 100,
-            width: double.infinity, // Makes image width match parent
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-              child: CachedNetworkImage(
-                imageUrl: data['imageUrl'],
-                fit: BoxFit.cover,
-                width: double.infinity, // Makes image width match parent
-                memCacheWidth: 800,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
+              height: 100,
+              width: double.infinity, // Makes image width match parent
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                child: CachedNetworkImage(
+                  imageUrl: data['imageUrl'],
+                  fit: BoxFit.cover,
+                  width: double.infinity, // Makes image width match parent
+                  memCacheWidth: 800,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[200],
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
                 ),
-              ),
-            )
+              )
           ),
           Padding(
             padding: const EdgeInsets.all(8),
@@ -256,52 +256,52 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(
-          'BRG',
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w900,
-            color: Colors.black,
+        backgroundColor: const Color(0xFFF3F4F6),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Text(
+            'BRG',
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
+            ),
           ),
-        ),
-        backgroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Stack(
-              alignment: Alignment.topRight,
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.notifications_none, color: Colors.black),
-                if (_hasUnreadNotifications)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
+          backgroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: Stack(
+                alignment: Alignment.topRight,
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.notifications_none, color: Colors.black),
+                  if (_hasUnreadNotifications)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
+              onPressed: () {
+                _markAllNotificationsAsRead();
+                _navigateToAuthScreen(const NotificationsScreen());
+              },
             ),
-            onPressed: () {
-              _markAllNotificationsAsRead();
-              _navigateToAuthScreen(const NotificationsScreen());
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.black),
-            onPressed: () => _navigateToAuthScreen(const ProfileScreen()),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
+            IconButton(
+              icon: const Icon(Icons.person_outline, color: Colors.black),
+              onPressed: () => _navigateToAuthScreen(const ProfileScreen()),
+            ),
+            const SizedBox(width: 12),
+          ],
+        ),
         body: RefreshIndicator(
           onRefresh: _getCurrentLocation,
           child: SingleChildScrollView(
@@ -356,7 +356,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 28
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -374,11 +375,21 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: const Row(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                      SizedBox(width: 2),
-                      Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
+                      const Text('더보기',
+                        style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                      ),
+                      const SizedBox(width: 2),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
+                        child: const Icon(Icons.keyboard_arrow_right,
+                            size: 14,
+                            color: Color(0xFF6B7280)
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -489,11 +500,21 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: const Row(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text('더보기', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                      SizedBox(width: 2),
-                      Icon(Icons.keyboard_arrow_right, size: 14, color: Color(0xFF6B7280)),
+                      const Text('더보기',
+                        style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                      ),
+                      const SizedBox(width: 2),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
+                        child: const Icon(Icons.keyboard_arrow_right,
+                            size: 14,
+                            color: Color(0xFF6B7280)
+                        ),
+                      ),
                     ],
                   ),
                 ),
