@@ -7,8 +7,9 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:async';
-import 'dart:math' as math; // 랜덤 오프셋 생성을 위해 math 라이브러리 추가
+import 'dart:math' as math;
 
+import '../services/meeting_service.dart';
 import '../models/meeting_point.dart';
 import '../services/chat_service.dart';
 import 'flash_detail_screen.dart';
@@ -37,6 +38,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
   bool _disposed = false;
   bool _isMapReady = false;
   bool _isDestroying = false;
+  final MeetingService _meetingService = MeetingService();
 
   // 위치 기반 마커 캐싱을 위한 맵 추가
   final Map<String, List<String>> _locationMeetingsMap = {};
@@ -51,6 +53,16 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         _loadRegionsFromAssets();
       }
     });
+    _checkExpiredMeetings();
+  }
+
+  // 만료된 모임 체크 메서드
+  Future<void> _checkExpiredMeetings() async {
+    try {
+      await _meetingService.checkExpiredMeetings();
+    } catch (e) {
+      debugPrint('모임 만료 체크 중 오류: $e');
+    }
   }
 
   @override
@@ -69,6 +81,8 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
       _meetingsSubscription?.cancel();
       _meetingsSubscription = null;
     } else if (state == AppLifecycleState.resumed) {
+      // 앱이 포그라운드로 돌아올 때 만료된 모임 체크
+      _checkExpiredMeetings();
       _setupMeetingsStream();
     }
   }
@@ -95,8 +109,10 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
 
   void _setupMeetingsStream() {
     _meetingsSubscription?.cancel();
+    // 상태가 'active'인 모임만 가져오도록 쿼리 수정
     _meetingsSubscription = FirebaseFirestore.instance
         .collection('meetings')
+        .where('status', isEqualTo: 'active') // 상태가 active인 모임만 필터링
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((snapshot) {
@@ -142,6 +158,10 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         if (_disposed || !_isMapReady) return;
 
         final meeting = MeetingPoint.fromFirestore(doc);
+        // 추가 검증: status가 'active'인 모임만 처리
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['status'] != 'active') continue;
+
         // 더 정밀한 위치키 사용 (소수점 5자리까지만 사용)
         final locationKey = '${meeting.location.latitude.toStringAsFixed(5)},${meeting.location.longitude.toStringAsFixed(5)}';
 
@@ -156,6 +176,9 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         if (_disposed || !_isMapReady) return;
 
         final meeting = MeetingPoint.fromFirestore(doc);
+        // 상태 확인: 'active'인 모임만 마커 표시
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['status'] != 'active') continue;
 
         // 이미 존재하는 마커 삭제
         if (_markersMap.containsKey(meeting.id)) {
@@ -924,7 +947,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                               final newMeeting = {
                                 'title': titleController.text,
                                 'hostId': user.uid,
-                                'hostName': userNickname, // Firestore에서 가져온 닉네임 사용
+                                'hostName': userNickname,
                                 'departureAddress': departureAddressController.text,
                                 'departureDetailAddress': departureDetailAddressController.text,
                                 'destinationAddress': destinationAddressController.text,

@@ -28,11 +28,25 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
   bool _isJoining = false;
   bool _isParticipant = false;
   bool _isHost = false;
+  bool _isExpired = false;
 
   @override
   void initState() {
     super.initState();
     _checkUserStatus();
+    _checkMeetingExpiry();
+  }
+
+  // 모임 만료 여부 체크
+  void _checkMeetingExpiry() {
+    final now = DateTime.now();
+
+    // 모임 시간 + 3시간 이후면 만료된 것으로 간주
+    final expiryTime = widget.meeting.meetingTime.add(Duration(hours: 3));
+
+    setState(() {
+      _isExpired = now.isAfter(expiryTime) || widget.meeting.status == 'completed';
+    });
   }
 
   void _checkUserStatus() {
@@ -880,7 +894,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
-          if (_isHost)
+          if (_isHost && !_isExpired)
             PopupMenuButton(
               icon: Icon(Icons.more_vert),
               itemBuilder: (context) => [
@@ -917,6 +931,20 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (_isExpired)  // 만료된 모임일 경우 알림 표시
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(8),
+                      color: Colors.amber.shade100,
+                      child: Text(
+                        '이 모임은 이미 종료되었습니다.',
+                        style: TextStyle(
+                          color: Colors.amber.shade900,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -957,10 +985,16 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                           label: '참  가  자',
                           value: '${widget.meeting.participants.length}명',
                         ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          icon: Icons.info_outline,
+                          label: '상       태',
+                          value: _isExpired ? '종료됨' : '진행중',
+                        ),
                       ],
                     ),
                   ),
-                  _buildRequestsList(),
+                  if (!_isExpired && _isHost) _buildRequestsList(),  // 만료되지 않은 모임에서만 요청 목록 표시
                   if (_isHost || _isParticipant)
                     Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -996,7 +1030,7 @@ class _FlashDetailScreenState extends State<FlashDetailScreen> {
                           ),
                           child: const Text('돌아가기'),
                         ),
-                        if (!_isHost && !_isParticipant)
+                        if (!_isHost && !_isParticipant && !_isExpired)
                           ElevatedButton(
                             onPressed: _isJoining ? null : _requestJoinMeeting,
                             style: ElevatedButton.styleFrom(
