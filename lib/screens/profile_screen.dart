@@ -296,16 +296,23 @@ class _ProfileScreenState extends State<ProfileScreen>
         throw '지원하지 않는 로그인 방식입니다.';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('계정이 성공적으로 삭제되었습니다')),
-      );
-      Navigator.of(context).pushReplacementNamed('/');
+      // 계정 삭제 후 처리 - 직접 로그인 화면으로 이동
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('계정이 성공적으로 삭제되었습니다')),
+        );
+        // 로그아웃 상태에서 로그인 화면으로 강제 이동
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      print('Error deleting account: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      if (mounted) {
+        setState(() => _isLoading = false);
+        print('Error deleting account: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     }
   }
 
@@ -772,235 +779,235 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
 
     return Scaffold(
-      backgroundColor: _tabController.index == 1 ? Colors.white : const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        title: Text(
-          '마이페이지',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
+        backgroundColor: _tabController.index == 1 ? Colors.white : const Color(0xFFF3F4F6),
+        appBar: AppBar(
+          title: Text(
+            '마이페이지',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        centerTitle: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: _handleLogout,
-            child: const Text('로그아웃', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(1.0),
-          child: Container(
-            color: Colors.grey[200],
-            height: 1.0,
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          Builder(
-            builder: (context) {
-              // 내 차량 탭(탭 인덱스가 1)인 경우 프로필 정보 표시하지 않음
-              if (_tabController.index == 1) {
-                return Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey[200]!,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(left: 16),
-                        child: Row(
-                          children: [
-                            _buildCategoryTab(0, '내 정보'),
-                            _buildCategoryTab(1, '내 차량'),
-                          ],
-                        ),
-                      ),
-                      Spacer(),
-                    ],
-                  ),
-                );
-              } else {
-                // 내 정보 탭인 경우 프로필 정보 표시
-                return Column(
-                  children: [
-                    _buildProfileInfo(),
-                    // 카테고리 메뉴
-                    Container(
-                      height: 60,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[200]!,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 16),
-                            child: Row(
-                              children: [
-                                _buildCategoryTab(0, '내 정보'),
-                                _buildCategoryTab(1, '내 차량'),
-                              ],
-                            ),
-                          ),
-                          Spacer(),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-            },
-          ),
-          Builder(
-            builder: (context) {
-              // 내 차량 탭(탭 인덱스가 1)에서는 SizedBox 없이 바로 표시
-              if (_tabController.index == 1) {
-                return SizedBox.shrink();
-              } else {
-                // 내 정보 탭에서는 SizedBox 유지
-                return SizedBox(height: 16);
-              }
-            },
-          ),
-          // 탭 내용 - 스크롤 가능한 부분
-          Expanded(
+          centerTitle: false,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            TextButton(
+              onPressed: _handleLogout,
+              child: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(1.0),
             child: Container(
-              color: Colors.transparent,
-              child: TabBarView(
-                controller: _tabController,
+              color: Colors.grey[200],
+              height: 1.0,
+            ),
+          ),
+        ),
+        body: Column(
+            children: [
+            Builder(
+            builder: (context) {
+        // 내 차량 탭(탭 인덱스가 1)인 경우 프로필 정보 표시하지 않음
+        if (_tabController.index == 1) {
+      return Container(
+        height: 60,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey[200]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 16),
+              child: Row(
                 children: [
-                  // 내 정보 탭
-                  RefreshIndicator(
-                    onRefresh: _loadUserData,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              physics: AlwaysScrollableScrollPhysics(),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                  _buildCategoryTab(0, '내 정보'),
+                  _buildCategoryTab(1, '내 차량'),
+                ],
+              ),
+            ),
+            Spacer(),
+          ],
+        ),
+      );
+    } else {
+    // 내 정보 탭인 경우 프로필 정보 표시
+    return Column(
+    children: [
+    _buildProfileInfo(),
+    // 카테고리 메뉴
+    Container(
+    height: 60,
+    decoration: BoxDecoration(
+    border: Border(
+    bottom: BorderSide(
+    color: Colors.grey[200]!,
+    width: 1,
+    ),
+    ),
+    ),
+    child: Row(
+    children: [
+    Padding(
+    padding: EdgeInsets.only(left: 16),
+    child: Row(
+    children: [
+    _buildCategoryTab(0, '내 정보'),
+    _buildCategoryTab(1, '내 차량'),
+    ],
+    ),
+    ),
+    Spacer(),
+    ],
+    ),
+    ),
+    ],
+    );
+    }
+    },
+    ),
+    Builder(
+    builder: (context) {
+    // 내 차량 탭(탭 인덱스가 1)에서는 SizedBox 없이 바로 표시
+    if (_tabController.index == 1) {
+    return SizedBox.shrink();
+    } else {
+    // 내 정보 탭에서는 SizedBox 유지
+    return SizedBox(height: 16);
+    }
+    },
+    ),
+              // 탭 내용 - 스크롤 가능한 부분
+              Expanded(
+                child: Container(
+                  color: Colors.transparent,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // 내 정보 탭
+                      RefreshIndicator(
+                        onRefresh: _loadUserData,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  physics: AlwaysScrollableScrollPhysics(),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        '참여중인 채팅방',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Spacer(),
-                                      GestureDetector(
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (context) => ChatListScreen()),
-                                        ),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              const Text('더보기',
-                                                style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '참여중인 채팅방',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          GestureDetector(
+                                            onTap: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) => ChatListScreen()),
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text('더보기',
+                                                    style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                                                  ),
+                                                  const SizedBox(width: 2),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
+                                                    child: const Icon(Icons.keyboard_arrow_right,
+                                                        size: 14,
+                                                        color: Color(0xFF6B7280)
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              const SizedBox(width: 2),
-                                              Padding(
-                                                padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
-                                                child: const Icon(Icons.keyboard_arrow_right,
-                                                    size: 14,
-                                                    color: Color(0xFF6B7280)
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 4),
+                                        child: _buildMeetingsList(),
+                                      ),
+                                      SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '작성글',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            child: const Text('최근 5개', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 4),
+                                        child: _buildPostsList(),
+                                      ),
+                                      SizedBox(height: 32), // 게시글 목록과 탈퇴 버튼 사이 간격
+                                      // 회원 탈퇴 버튼 (최하단으로 이동)
+                                      InkWell(
+                                        onTap: _handleDeleteAccount,
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(vertical: 16), // 상하 패딩 추가
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.end, // 우측 정렬로 변경
+                                            children: [
+                                              Icon(Icons.delete_forever, color: Colors.red[300], size: 20),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                '회원 탈퇴',
+                                                style: TextStyle(
+                                                  color: Colors.red[300],
+                                                  fontSize: 14,
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
                                       ),
+                                      SizedBox(height: 16), // 하단 여백
                                     ],
                                   ),
-                                  SizedBox(height: 8),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 4),
-                                    child: _buildMeetingsList(),
-                                  ),
-                                  SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '작성글',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Spacer(),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        child: const Text('최근 5개', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 8),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 4),
-                                    child: _buildPostsList(),
-                                  ),
-                                  SizedBox(height: 32), // 게시글 목록과 탈퇴 버튼 사이 간격
-                                  // 회원 탈퇴 버튼 (최하단으로 이동)
-                                  InkWell(
-                                    onTap: _handleDeleteAccount,
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(vertical: 16), // 상하 패딩 추가
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end, // 우측 정렬로 변경
-                                        children: [
-                                          Icon(Icons.delete_forever, color: Colors.red[300], size: 20),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            '회원 탈퇴',
-                                            style: TextStyle(
-                                              color: Colors.red[300],
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: 16), // 하단 여백
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      // 내 차량 탭
+                      MyVehicleTab(),
+                    ],
                   ),
-                  // 내 차량 탭
-                  MyVehicleTab(),
-                ],
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
+            ],
+        ),
       bottomNavigationBar: widget.showBottomNav ? Column(
         mainAxisSize: MainAxisSize.min,
         children: [

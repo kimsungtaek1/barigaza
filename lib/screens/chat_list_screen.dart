@@ -28,7 +28,11 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _checkLoginStatus();
+
+    // UI 렌더링이 완료된 후 로그인 상태 확인
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkLoginStatus();
+    });
   }
 
   @override
@@ -316,15 +320,13 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
             final userDetails = chatData['userDetails'] as Map<String,
                 dynamic>?;
             if (userDetails == null) return false;
-            final otherUserDetail = userDetails[otherUserId] as Map<
-                String,
-                dynamic>?;
-            if (otherUserDetail == null) return false;
-            chatTitle = otherUserDetail['nickname'] as String? ?? '';
+            final otherUserDetail = userDetails[otherUserId] as Map<String, dynamic>?;
+          if (otherUserDetail == null) return false;
+          chatTitle = otherUserDetail['nickname'] as String? ?? '';
           }
 
           return _searchQuery.isEmpty ||
-              chatTitle.toLowerCase().contains(_searchQuery);
+          chatTitle.toLowerCase().contains(_searchQuery);
         }).toList();
 
         if (filteredChats.isEmpty && _searchQuery.isNotEmpty) {
@@ -362,137 +364,135 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                   dynamic>?;
               if (userDetails == null) return const SizedBox.shrink();
 
-              final otherUserDetail = userDetails[otherUserId] as Map<
-                  String,
-                  dynamic>?;
-              if (otherUserDetail == null) return const SizedBox.shrink();
+              final otherUserDetail = userDetails[otherUserId] as Map<String, dynamic>?;
+            if (otherUserDetail == null) return const SizedBox.shrink();
 
-              chatTitle = otherUserDetail['nickname'] as String? ?? '알 수 없음';
-              chatImage = otherUserDetail['profileImage'] as String?;
+            chatTitle = otherUserDetail['nickname'] as String? ?? '알 수 없음';
+            chatImage = otherUserDetail['profileImage'] as String?;
             }
 
             // The filtering logic is now outside the item builder
             // No need for an additional check here
 
             return Dismissible(
-              key: Key(chatDoc.id),
-              // Use chatDoc.id
-              background: Container(
-                color: Colors.red,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 16),
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              confirmDismiss: (direction) async {
-                return await showDialog<bool>(
-                  context: context,
-                  builder: (context) =>
-                      AlertDialog(
-                        title: const Text('채팅방 나가기'),
-                        content: const Text('채팅방에서 나가시겠습니까?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('취소'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text(
-                                '나가기', style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      ),
-                );
-              },
-              onDismissed: (direction) async {
-                await _chatService.leaveChatRoom(chatDoc.id); // Use chatDoc.id
-              },
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Color(0xFF7EA6FD),
-                  backgroundImage: chatImage != null
-                      ? NetworkImage(chatImage)
-                      : null,
-                  child: chatImage == null
-                      ? Icon(Icons.person)
-                      : null,
-                ),
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        chatTitle,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isGroupChat)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Icon(Icons.group, size: 16, color: Colors
-                            .grey[600]),
-                      ),
-                  ],
-                ),
-                subtitle: Text(
-                  (chatData?['lastMessage']?.toString().trim().isEmpty ?? true)
-                      ? '채팅이 없습니다.'
-                      : chatData!['lastMessage'].toString(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      chatData['lastMessageTime'] != null
-                          ? _formatTimestamp(
-                          chatData['lastMessageTime'] as Timestamp)
-                          : '',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 4),
-                    StreamBuilder<int>(
-                      stream: _chatService.getUnreadMessageCount(chatDoc.id),
-                      // Use chatDoc.id
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData || snapshot.data == 0) {
-                          return const SizedBox.shrink();
-                        }
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF7EA6FD),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            snapshot.data.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ChatRoomScreen(
-                            chatId: chatDoc.id, // Use chatDoc.id
-                            otherUserNickname: chatTitle,
-                          ),
-                    ),
-                  );
-                },
-              ),
+            key: Key(chatDoc.id),
+            // Use chatDoc.id
+            background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 16),
+            child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            confirmDismiss: (direction) async {
+            return await showDialog<bool>(
+            context: context,
+            builder: (context) =>
+            AlertDialog(
+            title: const Text('채팅방 나가기'),
+            content: const Text('채팅방에서 나가시겠습니까?'),
+            actions: [
+            TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+            ),
+            TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+            '나가기', style: TextStyle(color: Colors.red)),
+            ),
+            ],
+            ),
+            );
+            },
+            onDismissed: (direction) async {
+            await _chatService.leaveChatRoom(chatDoc.id); // Use chatDoc.id
+            },
+            child: ListTile(
+            leading: CircleAvatar(
+            backgroundColor: Color(0xFF7EA6FD),
+            backgroundImage: chatImage != null
+            ? NetworkImage(chatImage)
+                : null,
+            child: chatImage == null
+            ? Icon(Icons.person)
+                : null,
+            ),
+            title: Row(
+            children: [
+            Expanded(
+            child: Text(
+            chatTitle,
+            overflow: TextOverflow.ellipsis,
+            ),
+            ),
+            if (isGroupChat)
+            Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Icon(Icons.group, size: 16, color: Colors
+                .grey[600]),
+            ),
+            ],
+            ),
+            subtitle: Text(
+            (chatData?['lastMessage']?.toString().trim().isEmpty ?? true)
+            ? '채팅이 없습니다.'
+                : chatData!['lastMessage'].toString(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+            Text(
+            chatData['lastMessageTime'] != null
+            ? _formatTimestamp(
+            chatData['lastMessageTime'] as Timestamp)
+                : '',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 4),
+            StreamBuilder<int>(
+            stream: _chatService.getUnreadMessageCount(chatDoc.id),
+            // Use chatDoc.id
+            builder: (context, snapshot) {
+            if (!snapshot.hasData || snapshot.data == 0) {
+            return const SizedBox.shrink();
+            }
+            return Container(
+            padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 4,
+            ),
+            decoration: BoxDecoration(
+            color: Color(0xFF7EA6FD),
+            borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+            snapshot.data.toString(),
+            style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            ),
+            ),
+            );
+            },
+            ),
+            ],
+            ),
+            onTap: () {
+            Navigator.push(
+            context,
+            MaterialPageRoute(
+            builder: (context) =>
+            ChatRoomScreen(
+            chatId: chatDoc.id, // Use chatDoc.id
+            otherUserNickname: chatTitle,
+            ),
+            ),
+            );
+            },
+            ),
             );
           },
         );
@@ -543,231 +543,229 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
         return ListView.builder(
           itemCount: filteredFriends.length,
           itemBuilder: (context, index) {
-            final userData = filteredFriends[index].data() as Map<
-                String,
-                dynamic>;
+            final userData = filteredFriends[index].data() as Map<String, dynamic>;
             final userId = filteredFriends[index].id;
             final nickname = userData['nickname'] as String? ?? '알 수 없음';
 
             return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Color(0xFF7EA6FD),
-                backgroundImage: userData['profileImage'] != null
-                    ? NetworkImage(userData['profileImage'])
-                    : null,
-                child: userData['profileImage'] == null
-                    ? Icon(Icons.person)
-                    : null,
-              ),
-              title: Text(nickname),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert),
-                    onSelected: (value) async {
-                      if (value == 'block') {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) =>
-                              AlertDialog(
-                                title: Text('친구 차단'),
-                                content: Text(
-                                    '$nickname님을 차단하시겠습니까?\n차단하면 친구 목록에서 삭제됩니다.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: Text('취소'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red),
-                                    child: Text('차단'),
-                                  ),
-                                ],
-                              ),
-                        );
+            leading: CircleAvatar(
+            backgroundColor: Color(0xFF7EA6FD),
+            backgroundImage: userData['profileImage'] != null
+            ? NetworkImage(userData['profileImage'])
+                : null,
+            child: userData['profileImage'] == null
+            ? Icon(Icons.person)
+                : null,
+            ),
+            title: Text(nickname),
+            trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+            PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert),
+            onSelected: (value) async {
+            if (value == 'block') {
+            final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) =>
+            AlertDialog(
+            title: Text('친구 차단'),
+            content: Text(
+            '$nickname님을 차단하시겠습니까?\n차단하면 친구 목록에서 삭제됩니다.'),
+            actions: [
+            TextButton(
+            onPressed: () =>
+            Navigator.pop(context, false),
+            child: Text('취소'),
+            ),
+            TextButton(
+            onPressed: () =>
+            Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+            foregroundColor: Colors.red),
+            child: Text('차단'),
+            ),
+            ],
+            ),
+            );
 
-                        if (confirm == true) {
-                          await _friendService.blockUser(userId);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('$nickname님을 차단했습니다')),
-                          );
-                        }
-                      } else if (value == 'report') {
-                        final reportReasons = [
-                          '불쾌감을 주는 행동',
-                          '스팸 또는 사기',
-                          '부적절한 프로필',
-                          '혐오/차별 발언',
-                          '기타'
-                        ];
+            if (confirm == true) {
+            await _friendService.blockUser(userId);
+            ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$nickname님을 차단했습니다')),
+            );
+            }
+            } else if (value == 'report') {
+            final reportReasons = [
+            '불쾌감을 주는 행동',
+            '스팸 또는 사기',
+            '부적절한 프로필',
+            '혐오/차별 발언',
+            '기타'
+            ];
 
-                        String selectedReason = reportReasons[0];
-                        final TextEditingController detailController = TextEditingController();
+            String selectedReason = reportReasons[0];
+            final TextEditingController detailController = TextEditingController();
 
-                        final bool? result = await showDialog<bool>(
-                          context: context,
-                          builder: (context) =>
-                              StatefulBuilder(
-                                builder: (context, setState) =>
-                                    AlertDialog(
-                                      title: Text('사용자 신고'),
-                                      content: SingleChildScrollView(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment
-                                              .start,
-                                          children: [
-                                            Text('신고 사유를 선택해주세요:'),
-                                            SizedBox(height: 8),
-                                            DropdownButton<String>(
-                                              isExpanded: true,
-                                              value: selectedReason,
-                                              items: reportReasons.map((
-                                                  reason) {
-                                                return DropdownMenuItem<String>(
-                                                  value: reason,
-                                                  child: Text(reason),
-                                                );
-                                              }).toList(),
-                                              onChanged: (value) {
-                                                if (value != null) {
-                                                  setState(() {
-                                                    selectedReason = value;
-                                                  });
-                                                }
-                                              },
-                                            ),
-                                            SizedBox(height: 16),
-                                            Text('상세 내용 (선택사항):'),
-                                            TextField(
-                                              controller: detailController,
-                                              maxLines: 3,
-                                              decoration: InputDecoration(
-                                                hintText: '추가적인 신고 내용을 입력해주세요',
-                                                border: OutlineInputBorder(),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: Text('취소'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          style: TextButton.styleFrom(
-                                              foregroundColor: Colors.red),
-                                          child: Text('신고하기'),
-                                        ),
-                                      ],
-                                    ),
-                              ),
-                        );
+            final bool? result = await showDialog<bool>(
+            context: context,
+            builder: (context) =>
+            StatefulBuilder(
+            builder: (context, setState) =>
+            AlertDialog(
+            title: Text('사용자 신고'),
+            content: SingleChildScrollView(
+            child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment
+                .start,
+            children: [
+            Text('신고 사유를 선택해주세요:'),
+            SizedBox(height: 8),
+            DropdownButton<String>(
+            isExpanded: true,
+            value: selectedReason,
+            items: reportReasons.map((
+            reason) {
+            return DropdownMenuItem<String>(
+            value: reason,
+            child: Text(reason),
+            );
+            }).toList(),
+            onChanged: (value) {
+            if (value != null) {
+            setState(() {
+            selectedReason = value;
+            });
+            }
+            },
+            ),
+            SizedBox(height: 16),
+            Text('상세 내용 (선택사항):'),
+            TextField(
+            controller: detailController,
+            maxLines: 3,
+            decoration: InputDecoration(
+            hintText: '추가적인 신고 내용을 입력해주세요',
+            border: OutlineInputBorder(),
+            ),
+            ),
+            ],
+            ),
+            ),
+            actions: [
+            TextButton(
+            onPressed: () =>
+            Navigator.pop(context, false),
+            child: Text('취소'),
+            ),
+            TextButton(
+            onPressed: () =>
+            Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+            foregroundColor: Colors.red),
+            child: Text('신고하기'),
+            ),
+            ],
+            ),
+            ),
+            );
 
-                        if (result == true) {
-                          final reason = selectedReason +
-                              (detailController.text.isNotEmpty
-                                  ? ' - ${detailController.text}'
-                                  : '');
+            if (result == true) {
+            final reason = selectedReason +
+            (detailController.text.isNotEmpty
+            ? ' - ${detailController.text}'
+                : '');
 
-                          final success = await _friendService.reportUser(
-                              userId, reason);
+            final success = await _friendService.reportUser(
+            userId, reason);
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(success
-                                  ? '신고가 접수되었습니다. 검토 후 조치하겠습니다.'
-                                  : '신고 접수에 실패했습니다.'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      } else if (value == 'remove') {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) =>
-                              AlertDialog(
-                                title: Text('친구 삭제'),
-                                content: Text('$nickname님을 친구 목록에서 삭제하시겠습니까?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: Text('취소'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red),
-                                    child: Text('삭제'),
-                                  ),
-                                ],
-                              ),
-                        );
+            ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+            content: Text(success
+            ? '신고가 접수되었습니다. 검토 후 조치하겠습니다.'
+                : '신고 접수에 실패했습니다.'),
+            duration: Duration(seconds: 2),
+            ),
+            );
+            }
+            } else if (value == 'remove') {
+            final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) =>
+            AlertDialog(
+            title: Text('친구 삭제'),
+            content: Text('$nickname님을 친구 목록에서 삭제하시겠습니까?'),
+            actions: [
+            TextButton(
+            onPressed: () =>
+            Navigator.pop(context, false),
+            child: Text('취소'),
+            ),
+            TextButton(
+            onPressed: () =>
+            Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+            foregroundColor: Colors.red),
+            child: Text('삭제'),
+            ),
+            ],
+            ),
+            );
 
-                        if (confirm == true) {
-                          await _friendService.removeFriend(userId);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('$nickname님을 친구 목록에서 삭제했습니다')),
-                          );
-                        }
-                      }
-                    },
-                    itemBuilder: (context) =>
-                    [
-                      PopupMenuItem(
-                        value: 'remove',
-                        child: Row(
-                          children: [
-                            Icon(Icons.person_remove, color: Colors.red,
-                                size: 20),
-                            SizedBox(width: 8),
-                            Text('친구 삭제'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'block',
-                        child: Row(
-                          children: [
-                            Icon(Icons.block, color: Colors.red, size: 20),
-                            SizedBox(width: 8),
-                            Text('차단하기'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'report',
-                        child: Row(
-                          children: [
-                            Icon(Icons.flag, color: Colors.red, size: 20),
-                            SizedBox(width: 8),
-                            Text('신고하기'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              onTap: () {
-                _showUserProfile(
-                  userId,
-                  nickname,
-                  userData['profileImage'],
-                );
-              },
+            if (confirm == true) {
+            await _friendService.removeFriend(userId);
+            ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+            content: Text('$nickname님을 친구 목록에서 삭제했습니다')),
+            );
+            }
+            }
+            },
+            itemBuilder: (context) =>
+            [
+            PopupMenuItem(
+            value: 'remove',
+            child: Row(
+            children: [
+            Icon(Icons.person_remove, color: Colors.red,
+            size: 20),
+            SizedBox(width: 8),
+            Text('친구 삭제'),
+            ],
+            ),
+            ),
+            PopupMenuItem(
+            value: 'block',
+            child: Row(
+            children: [
+            Icon(Icons.block, color: Colors.red, size: 20),
+            SizedBox(width: 8),
+            Text('차단하기'),
+            ],
+            ),
+            ),
+            PopupMenuItem(
+            value: 'report',
+            child: Row(
+            children: [
+            Icon(Icons.flag, color: Colors.red, size: 20),
+            SizedBox(width: 8),
+            Text('신고하기'),
+            ],
+            ),
+            ),
+            ],
+            ),
+            ],
+            ),
+            onTap: () {
+            _showUserProfile(
+            userId,
+            nickname,
+            userData['profileImage'],
+            );
+            },
             );
           },
         );

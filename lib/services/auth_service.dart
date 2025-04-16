@@ -199,13 +199,13 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  //회원탈퇴
   Future<void> deleteAccount({String? password}) async {
     try {
       User? user = _auth.currentUser;
       if (user != null) {
-        // 재인증이 필요한 경우를 대비하여 password가 제공되었다면 재인증 수행
+        // 재인증이 필요한 경우 재인증 수행
         if (password != null && user.email != null) {
-          // 이메일/비밀번호 자격 증명 생성
           AuthCredential credential = EmailAuthProvider.credential(
             email: user.email!,
             password: password,
@@ -221,18 +221,24 @@ class AuthService with ChangeNotifier {
           }
         }
 
-        // Firestore에서 사용자 데이터 삭제
-        await _firestore.collection('users').doc(user.uid).delete();
+        final String uid = user.uid; // 삭제 전에 uid 저장
 
-        // Firebase Auth에서 사용자 계정 삭제
+        // 1. Firebase Auth에서 사용자 계정을 먼저 삭제
         await user.delete();
 
-        // 로그아웃 처리
+        // 2. 선택적으로 Firestore에서 사용자 데이터 삭제 시도
+        try {
+          await _firestore.collection('users').doc(uid).delete();
+        } catch (e) {
+          debugPrint('Firestore 사용자 데이터 삭제 실패 (무시): $e');
+          // 계속 진행 - 삭제 실패해도 Auth 계정은 이미 삭제됨
+        }
+
+        // 3. 로그아웃 처리
         await signOut();
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
-        // 민감한 작업을 수행하기 위해 재인증이 필요한 경우
         throw '보안을 위해 다시 로그인한 후 시도해주세요.';
       }
       throw '계정 삭제 중 오류가 발생했습니다: ${e.message}';
@@ -240,7 +246,7 @@ class AuthService with ChangeNotifier {
       throw '계정 삭제 중 오류가 발생했습니다: $e';
     }
   }
-
+  
   // 회원가입 (상세 정보 포함)
   Future<UserCredential?> signUp({
     required String email,

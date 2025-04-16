@@ -103,7 +103,7 @@ service cloud.firestore {
                data.nickname is string &&
                data.name is string &&
                data.phone is string &&
-               (!data.keys().hasAny(['gender']) || data.gender is string) &&
+               data.gender is string &&
                data.role is string &&
                data.uid is string &&
                data.isPhoneVerified is bool &&
@@ -168,14 +168,8 @@ service cloud.firestore {
         return data.friends is list && 
                data.friends.size() <= 1000; // 친구 목록 최대 크기 제한
       }
-      allow delete: if isAdminRole();
+      allow delete: if isUserAuthenticated(userId) || isAdminRole();
     }
-
-    // ─────────────────────────────
-    // 친구 관리 규칙
-    // ─────────────────────────────
-    // 참고: 카카오톡 방식에서는 친구 요청 없이 바로 친구추가가 가능합니다.
-    // 따라서 friendRequests 컬렉션은 더 이상 사용하지 않습니다.
 
     // ─────────────────────────────
     // 신고 컬렉션 규칙 추가
