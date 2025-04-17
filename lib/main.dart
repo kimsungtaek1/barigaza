@@ -95,7 +95,7 @@ Future<void> initializeApp() async {
     await MobileAds.instance.initialize();
     await MobileAds.instance.updateRequestConfiguration(
       RequestConfiguration(
-          testDeviceIds: ['57195416F96C769F4DC8787DA0B95470']
+          testDeviceIds: ['57195416F96C769F4DC8787DA0B95470','08ca63f03357d54fcfc387421218599d']
       ),
     );
   } catch (e) {
