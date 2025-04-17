@@ -39,8 +39,9 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
   bool _isMapReady = false;
   bool _isDestroying = false;
   final MeetingService _meetingService = MeetingService();
-  double _markerScale = 1.0;
+  double _markerScale = 0.8;
   double _lastZoom = 11.0;
+  List<QueryDocumentSnapshot> _latestDocs = [];
 
   // 위치 기반 마커 캐싱을 위한 맵 추가
   final Map<String, List<String>> _locationMeetingsMap = {};
@@ -133,20 +134,32 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _updateMarkers(List<QueryDocumentSnapshot> docs) async {
+    _latestDocs = docs;
     if (_mapController == null || !_isMapReady || _isDestroying) {
       return;
     }
     try {
+      // 지도 중심 좌표 가져오기
+      final cameraPosition = await _mapController!.getCameraPosition();
+      final NLatLng center = cameraPosition.target;
+      double calcDistance(GeoPoint? p) {
+        if (p == null) return double.infinity;
+        final dx = center.latitude - p.latitude;
+        final dy = center.longitude - p.longitude;
+        return dx * dx + dy * dy; // 빠른 거리 계산
+      }
+      final sortedDocs = [...docs];
+      sortedDocs.sort((a, b) {
+        final aLoc = (a.data() as Map<String, dynamic>)['location'] as GeoPoint?;
+        final bLoc = (b.data() as Map<String, dynamic>)['location'] as GeoPoint?;
+        return calcDistance(aLoc).compareTo(calcDistance(bLoc));
+      });
       // 위치 기반 마커 맵 초기화
       _locationMeetingsMap.clear();
-
-      // 현재 문서 ID 세트 생성
       final Set<String> currentIds = docs.map((doc) => doc.id).toSet();
       final List<String> markersToRemove = _markersMap.keys
           .where((key) => !currentIds.contains(key))
           .toList();
-
-      // 필요 없는 마커 제거
       for (final key in markersToRemove) {
         final marker = _markersMap[key];
         if (marker != null && !_isDestroying) {
@@ -154,35 +167,27 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
           _markersMap.remove(key);
         }
       }
-
       // 첫 번째 패스: 위치별 모임 ID 완전히 그룹화
-      for (final doc in docs) {
+      for (final doc in sortedDocs) {
         if (_disposed || !_isMapReady) return;
-
         final meeting = MeetingPoint.fromFirestore(doc);
-        // 추가 검증: status가 'active'인 모임만 처리
         final data = doc.data() as Map<String, dynamic>;
         if (data['status'] != 'active') continue;
-
-        // 더 정밀한 위치키 사용 (소수점 5자리까지만 사용)
         final locationKey = '${meeting.location.latitude.toStringAsFixed(5)},${meeting.location.longitude.toStringAsFixed(5)}';
-
         if (!_locationMeetingsMap.containsKey(locationKey)) {
           _locationMeetingsMap[locationKey] = [];
         }
         _locationMeetingsMap[locationKey]!.add(meeting.id);
       }
-
-      // 두 번째 패스: 각 문서에 대해 마커 생성
-      for (final doc in docs) {
+      // 가까운 N개만 먼저 추가, 나머지는 비동기 배치로 추가
+      const int batchSize = 20;
+      final initialDocs = sortedDocs.take(batchSize).toList();
+      final restDocs = sortedDocs.skip(batchSize).toList();
+      Future<void> addMarkerForDoc(QueryDocumentSnapshot doc) async {
         if (_disposed || !_isMapReady) return;
-
         final meeting = MeetingPoint.fromFirestore(doc);
-        // 상태 확인: 'active'인 모임만 마커 표시
         final data = doc.data() as Map<String, dynamic>;
-        if (data['status'] != 'active') continue;
-
-        // 이미 존재하는 마커 삭제
+        if (data['status'] != 'active') return;
         if (_markersMap.containsKey(meeting.id)) {
           final existingMarker = _markersMap[meeting.id]!;
           try {
@@ -192,21 +197,12 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
           }
           _markersMap.remove(meeting.id);
         }
-
-        if (!_isMapReady || _disposed) continue;
-
+        if (!_isMapReady || _disposed) return;
         try {
-          // 정밀한 위치키로 jitter 계산
           final locationKey = '${meeting.location.latitude.toStringAsFixed(5)},${meeting.location.longitude.toStringAsFixed(5)}';
-
-          // 해당 그룹 내 위치 인덱스 계산
           final index = _locationMeetingsMap[locationKey]!.indexOf(meeting.id);
           final jitteredPosition = _applyJitterImproved(meeting.location, locationKey, index);
-
-          // 마커 생성 (커스텀 마커 이미지 사용)
           final markerImage = await _createCustomMarkerImage(meeting.title);
-
-          // 네이버 맵에서 지원하는 기본 캡션 설정
           final caption = NOverlayCaption(
             text: meeting.title,
             textSize: 14,
@@ -215,7 +211,6 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
             minZoom: 10,
             maxZoom: 20,
           );
-
           final marker = NMarker(
             id: meeting.id,
             position: jitteredPosition,
@@ -224,11 +219,9 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
             caption: caption,
             captionOffset: -50,
           );
-
           marker.setOnTapListener((NMarker marker) {
             _showMeetingDetail(meeting);
           });
-
           if (!_disposed && _isMapReady) {
             await _mapController!.addOverlay(marker);
             _markersMap[meeting.id] = marker;
@@ -236,6 +229,17 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
         } catch (e) {
           debugPrint('Error creating marker: $e');
         }
+      }
+      // 가까운 N개 즉시 추가
+      for (final doc in initialDocs) {
+        await addMarkerForDoc(doc);
+      }
+      // 나머지는 배치로 추가
+      for (int i = 0; i < restDocs.length; i += batchSize) {
+        if (_disposed || !_isMapReady) break;
+        final batch = restDocs.skip(i).take(batchSize);
+        await Future.wait(batch.map(addMarkerForDoc));
+        await Future.delayed(const Duration(milliseconds: 200));
       }
     } catch (e) {
       debugPrint('Error updating markers: $e');
@@ -393,24 +397,26 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                         _setupMeetingsStream();
                       }
                     },
-                    onCameraChange: (reason, position) {
-                      double zoom = position.zoom;
-                      double newScale;
-                      if (zoom >= 14) {
-                        newScale = 1.0;
-                      } else if (zoom >= 10) {
-                        newScale = 0.8;
-                      } else {
-                        newScale = 0.5;
+                    onCameraIdle: () async {
+                      if (_mapController != null && _latestDocs.isNotEmpty) {
+                        final cameraPosition = await _mapController!.getCameraPosition();
+                        final zoom = cameraPosition.zoom;
+                        double newScale;
+                        if (zoom >= 11) {
+                          newScale = 0.8;
+                        } else if (zoom > 8) {
+                          newScale = 0.5;
+                        } else{
+                          newScale = 0.3;
+                        }
+                        if (newScale != _markerScale) {
+                          setState(() {
+                            _markerScale = newScale;
+                          });
+                          _updateMarkers(_latestDocs); // 마커 크기 반영
+                        }
+                        _lastZoom = zoom;
                       }
-                      if (newScale != _markerScale) {
-                        setState(() {
-                          _markerScale = newScale;
-                        });
-                        // 마커 크기 갱신
-                        _updateMarkers(_markersMap.values.map((m) => m.info).toList());
-                      }
-                      _lastZoom = zoom;
                     },
                   ),
                 ],

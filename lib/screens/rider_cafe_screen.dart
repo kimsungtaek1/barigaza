@@ -38,6 +38,9 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
   bool _disposed = false;
   bool _isMapReady = false;
   bool _isDestroying = false;
+  double _markerScale = 0.8;
+  double _lastZoom = 11.0;
+  List<QueryDocumentSnapshot> _latestDocs = [];
 
   @override
   void initState() {
@@ -125,13 +128,30 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
   }
 
   Future<void> _updateMarkers(List<QueryDocumentSnapshot> docs) async {
+    _latestDocs = docs;
     if (_mapController == null || !_isMapReady || _isDestroying) return;
 
     try {
+      // 지도 중심 좌표 가져오기
+      final cameraPosition = await _mapController!.getCameraPosition();
+      final NLatLng center = cameraPosition.target;
+      // 거리 계산 함수
+      double calcDistance(GeoPoint? p) {
+        if (p == null) return double.infinity;
+        final dx = center.latitude - p.latitude;
+        final dy = center.longitude - p.longitude;
+        return dx * dx + dy * dy; // 유클리드 제곱거리(빠름)
+      }
+      // docs를 거리순 정렬
+      final sortedDocs = [...docs];
+      sortedDocs.sort((a, b) {
+        final aLoc = (a.data() as Map<String, dynamic>)['location'] as GeoPoint?;
+        final bLoc = (b.data() as Map<String, dynamic>)['location'] as GeoPoint?;
+        return calcDistance(aLoc).compareTo(calcDistance(bLoc));
+      });
       final Set<String> currentIds = docs.map((doc) => doc.id).toSet();
       final List<String> markersToRemove =
-      _markersMap.keys.where((key) => !currentIds.contains(key)).toList();
-
+          _markersMap.keys.where((key) => !currentIds.contains(key)).toList();
       for (final key in markersToRemove) {
         final marker = _markersMap[key];
         if (marker != null && !_isDestroying) {
@@ -139,13 +159,15 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
           _markersMap.remove(key);
         }
       }
-
-      for (final doc in docs) {
+      // 가까운 N개만 먼저 추가, 나머지는 비동기 배치로 추가
+      const int batchSize = 20;
+      final initialDocs = sortedDocs.take(batchSize).toList();
+      final restDocs = sortedDocs.skip(batchSize).toList();
+      // 마커 추가 함수
+      Future<void> addMarkerForDoc(QueryDocumentSnapshot doc) async {
         if (_disposed || !_isMapReady) return;
-
         final data = doc.data() as Map<String, dynamic>;
         final GeoPoint? location = data['location'] as GeoPoint?;
-
         if (location != null) {
           if (_markersMap.containsKey(doc.id)) {
             final existingMarker = _markersMap[doc.id]!;
@@ -156,34 +178,36 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
             }
             _markersMap.remove(doc.id);
           }
-
-          if (!_isMapReady || _disposed) continue;
-
+          if (!_isMapReady || _disposed) return;
           try {
             final marker = NMarker(
               id: doc.id,
               position: NLatLng(location.latitude, location.longitude),
-              size: const NSize(36.0, 44.5),
-              icon: NOverlayImage.fromAssetImage('assets/images/marker.png')
+              size: NSize(36.0 * _markerScale, 44.5 * _markerScale),
+              icon: NOverlayImage.fromAssetImage('assets/images/marker.png'),
             );
-
-            if (!_isMapReady || _disposed) continue;
-
             marker.setOnTapListener((NMarker marker) {
               _showCafeDetails(doc);
             });
-
             if (!_disposed && _isMapReady) {
               await _mapController!.addOverlay(marker);
-              await Future.delayed(const Duration(milliseconds: 100));
-              if (!_disposed && _isMapReady) {
-                _markersMap[doc.id] = marker;
-              }
+              _markersMap[doc.id] = marker;
             }
           } catch (e) {
             debugPrint('마커/인포윈도우 생성 중 에러: $e');
           }
         }
+      }
+      // 가까운 N개 즉시 추가
+      for (final doc in initialDocs) {
+        await addMarkerForDoc(doc);
+      }
+      // 나머지는 배치로 추가
+      for (int i = 0; i < restDocs.length; i += batchSize) {
+        if (_disposed || !_isMapReady) break;
+        final batch = restDocs.skip(i).take(batchSize);
+        await Future.wait(batch.map(addMarkerForDoc));
+        await Future.delayed(const Duration(milliseconds: 200));
       }
     } catch (e) {
       debugPrint('Error updating markers: $e');
@@ -511,6 +535,27 @@ class _RiderCafeScreenState extends State<RiderCafeScreen>
                       );
                     }
                     _setupCafesStream();
+                  }
+                },
+                onCameraIdle: () async {
+                  if (_mapController != null && _latestDocs.isNotEmpty) {
+                    final cameraPosition = await _mapController!.getCameraPosition();
+                    final zoom = cameraPosition.zoom;
+                    double newScale;
+                    if (zoom >= 11) {
+                      newScale = 0.8;
+                    } else if (zoom > 8) {
+                      newScale = 0.5;
+                    } else{
+                      newScale = 0.3;
+                    }
+                    if (newScale != _markerScale) {
+                      setState(() {
+                        _markerScale = newScale;
+                      });
+                      _updateMarkers(_latestDocs); // 마커 크기 반영
+                    }
+                    _lastZoom = zoom;
                   }
                 },
               ),
