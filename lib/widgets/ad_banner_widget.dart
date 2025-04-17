@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:io';
 
 class AdBannerWidget extends StatefulWidget {
   const AdBannerWidget({super.key});
@@ -16,11 +17,11 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // 앱 심사 통과 후 주석 제거
-    // Future.delayed(const Duration(milliseconds: 100), () {
-    //   if (mounted) {  // 위젯이 여전히 존재하는지 확인
-    //     _loadAd();
-    //   }
-    // });
+    Future.delayed(const Duration(milliseconds: 100), () {
+       if (mounted) {  // 위젯이 여전히 존재하는지 확인
+         _loadAd();
+       }
+    });
   }
 
   Future<void> _loadAd() async {
@@ -37,7 +38,11 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
     _bannerAd = BannerAd(
       size: adSize,
-      adUnitId: 'ca-app-pub-5611049369649522/5462982608',
+      adUnitId: Platform.isAndroid
+          ? 'ca-app-pub-9517075079081829~8133114224'
+          : Platform.isIOS
+              ? 'ca-app-pub-9517075079081829~1489720808'
+              : 'unexpected-platform-ad-unit-id',
       listener: BannerAdListener(
         onAdLoaded: (_) {
           setState(() {
@@ -62,26 +67,19 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   @override
   Widget build(BuildContext context) {
     // 앱 심사 통과 후 주석 제거
-    // if (!_isLoaded || _bannerAd == null) {
-    //   return Container(
-    //     width: MediaQuery.of(context).size.width,  // 전체 너비
-    //     height: 50,  // 명시적 높이
-    //     color: Colors.transparent,
-    //   );
-    // }
-    // 
-    // return Container(
-    //   width: MediaQuery.of(context).size.width,  // 전체 너비
-    //   height: 50,  // 명시적 높이
-    //   color: Colors.white,
-    //   child: AdWidget(ad: _bannerAd!),
-    // );
-    
-    // 앱 심사용 임시 흰색 배경 컨테이너
+    if (!_isLoaded || _bannerAd == null) {
+      return Container(
+        width: MediaQuery.of(context).size.width,  // 전체 너비
+        height: 50,  // 명시적 높이
+        color: Colors.transparent,
+      );
+    }
+
     return Container(
       width: MediaQuery.of(context).size.width,  // 전체 너비
       height: 50,  // 명시적 높이
       color: Colors.white,
+      child: AdWidget(ad: _bannerAd!),
     );
   }
 
