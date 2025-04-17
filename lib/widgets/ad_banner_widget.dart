@@ -39,9 +39,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     _bannerAd = BannerAd(
       size: adSize,
       adUnitId: Platform.isAndroid
-          ? 'ca-app-pub-9517075079081829~8133114224'
+          ? 'ca-app-pub-9517075079081829/9266232490'
           : Platform.isIOS
-              ? 'ca-app-pub-9517075079081829~1489720808'
+              ? 'ca-app-pub-9517075079081829/6442664585'
               : 'unexpected-platform-ad-unit-id',
       listener: BannerAdListener(
         onAdLoaded: (_) {
