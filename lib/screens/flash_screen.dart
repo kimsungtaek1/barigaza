@@ -39,6 +39,8 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
   bool _isMapReady = false;
   bool _isDestroying = false;
   final MeetingService _meetingService = MeetingService();
+  double _markerScale = 1.0;
+  double _lastZoom = 11.0;
 
   // 위치 기반 마커 캐싱을 위한 맵 추가
   final Map<String, List<String>> _locationMeetingsMap = {};
@@ -217,7 +219,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
           final marker = NMarker(
             id: meeting.id,
             position: jitteredPosition,
-            size: const NSize(36.0, 44.5),
+            size: NSize(36.0 * _markerScale, 44.5 * _markerScale),
             icon: markerImage,
             caption: caption,
             captionOffset: -50,
@@ -390,6 +392,25 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                         });
                         _setupMeetingsStream();
                       }
+                    },
+                    onCameraChange: (reason, position) {
+                      double zoom = position.zoom;
+                      double newScale;
+                      if (zoom >= 14) {
+                        newScale = 1.0;
+                      } else if (zoom >= 10) {
+                        newScale = 0.8;
+                      } else {
+                        newScale = 0.5;
+                      }
+                      if (newScale != _markerScale) {
+                        setState(() {
+                          _markerScale = newScale;
+                        });
+                        // 마커 크기 갱신
+                        _updateMarkers(_markersMap.values.map((m) => m.info).toList());
+                      }
+                      _lastZoom = zoom;
                     },
                   ),
                 ],
