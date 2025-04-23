@@ -71,7 +71,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     if (!_isLoaded || _bannerAd == null) {
       return Container(
         width: MediaQuery.of(context).size.width,  // 전체 너비
-        height: 0,
+        height: 50.0,
         color: Colors.transparent,
       );
     }
