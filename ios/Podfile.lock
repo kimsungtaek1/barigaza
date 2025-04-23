@@ -1309,8 +1309,6 @@ PODS:
     - Mantle
     - SDWebImage
     - SDWebImageWebPCoder
-  - flutter_native_image (0.0.1):
-    - Flutter
   - flutter_native_splash (2.4.3):
     - Flutter
   - flutter_naver_map (1.3.0):
@@ -1549,7 +1547,6 @@ DEPENDENCIES:
   - FirebaseAppCheck
   - Flutter (from `Flutter`)
   - flutter_image_compress_common (from `.symlinks/plugins/flutter_image_compress_common/ios`)
-  - flutter_native_image (from `.symlinks/plugins/flutter_native_image/ios`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - flutter_naver_map (from `.symlinks/plugins/flutter_naver_map/ios`)
   - geocoding_ios (from `.symlinks/plugins/geocoding_ios/ios`)
@@ -1628,8 +1625,6 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_image_compress_common:
     :path: ".symlinks/plugins/flutter_image_compress_common/ios"
-  flutter_native_image:
-    :path: ".symlinks/plugins/flutter_native_image/ios"
   flutter_native_splash:
     :path: ".symlinks/plugins/flutter_native_splash/ios"
   flutter_naver_map:
@@ -1688,7 +1683,6 @@ SPEC CHECKSUMS:
   FirebaseStorage: 52fb65a69d3e87675186881a08e2a5db86452ace
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_image_compress_common: 1697a328fd72bfb335507c6bca1a65fa5ad87df1
-  flutter_native_image: c0f200e4bc5da392b15878df38654cc85a78b090
   flutter_native_splash: 6cad9122ea0fad137d23137dd14b937f3e90b145
   flutter_naver_map: b7ccf21ee350a34381ec92d0bfdad1e8714af9bc
   geocoding_ios: bcbdaa6bddd7d3129c9bcb8acddc5d8778689768
