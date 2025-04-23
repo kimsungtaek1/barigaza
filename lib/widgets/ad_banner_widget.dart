@@ -12,6 +12,7 @@ class AdBannerWidget extends StatefulWidget {
 class _AdBannerWidgetState extends State<AdBannerWidget> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
+  AdSize? _adSize;
 
   @override
   void didChangeDependencies() {
@@ -27,14 +28,14 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   Future<void> _loadAd() async {
     // 화면 너비를 가져옵니다
     final width = MediaQuery.of(context).size.width.truncate();
-
-    // 스마트 배너 사이즈 사용
     final adSize = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
 
     if (adSize == null) {
       debugPrint('Unable to get AdSize');
       return;
     }
+
+    setState(() => _adSize = adSize);
 
     _bannerAd = BannerAd(
       size: adSize,
@@ -70,14 +71,14 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     if (!_isLoaded || _bannerAd == null) {
       return Container(
         width: MediaQuery.of(context).size.width,  // 전체 너비
-        height: 50,  // 명시적 높이
+        height: 0,
         color: Colors.transparent,
       );
     }
 
     return Container(
       width: MediaQuery.of(context).size.width,  // 전체 너비
-      height: 50,  // 명시적 높이
+      height: _adSize!.height.toDouble(),
       color: Colors.white,
       child: AdWidget(ad: _bannerAd!),
     );

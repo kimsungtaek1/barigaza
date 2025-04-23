@@ -93,11 +93,6 @@ Future<void> initializeApp() async {
 
     // AdMob 초기화
     await MobileAds.instance.initialize();
-    await MobileAds.instance.updateRequestConfiguration(
-      RequestConfiguration(
-          testDeviceIds: []
-      ),
-    );
   } catch (e) {
     debugPrint('초기화 오류: $e');
   }
