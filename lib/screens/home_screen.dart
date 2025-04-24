@@ -136,49 +136,58 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false, // 키보드에 의한 리사이징 방지
         body: SafeArea(
           child: _buildCurrentScreen(),
         ),
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: _checkAndNavigate,
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: Theme.of(context).primaryColor,
-              unselectedItemColor: Colors.grey,
-              showUnselectedLabels: true,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/images/home.png')),
-                  activeIcon: ImageIcon(AssetImage('assets/images/home_selected.png')),
-                  label: '홈',
+        bottomNavigationBar: MediaQuery.removePadding(
+          context: context,
+          removeBottom: true, // 하단 패딩 제거
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.width > 600 ? 80 : 60, // 아이패드는 더 큰 높이 적용
+                child: BottomNavigationBar(
+                  currentIndex: _selectedIndex,
+                  onTap: _checkAndNavigate,
+                  type: BottomNavigationBarType.fixed,
+                  selectedItemColor: Theme.of(context).primaryColor,
+                  unselectedItemColor: Colors.grey,
+                  showUnselectedLabels: true,
+                  elevation: 0, // 그림자 제거
+                  items: const [
+                    BottomNavigationBarItem(
+                      icon: ImageIcon(AssetImage('assets/images/home.png')),
+                      activeIcon: ImageIcon(AssetImage('assets/images/home_selected.png')),
+                      label: '홈',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: ImageIcon(AssetImage('assets/images/community.png')),
+                      activeIcon: ImageIcon(AssetImage('assets/images/community_selected.png')),
+                      label: '커뮤니티',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: ImageIcon(AssetImage('assets/images/motorcycle.png')),
+                      activeIcon: ImageIcon(AssetImage('assets/images/motorcycle_selected.png')),
+                      label: '내 차',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: ImageIcon(AssetImage('assets/images/thunder.png')),
+                      activeIcon: ImageIcon(AssetImage('assets/images/thunder_selected.png')),
+                      label: '번개',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: ImageIcon(AssetImage('assets/images/chat.png')),
+                      activeIcon: ImageIcon(AssetImage('assets/images/chat_selected.png')),
+                      label: '채팅',
+                    ),
+                  ],
                 ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/images/community.png')),
-                  activeIcon: ImageIcon(AssetImage('assets/images/community_selected.png')),
-                  label: '커뮤니티',
-                ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/images/motorcycle.png')),
-                  activeIcon: ImageIcon(AssetImage('assets/images/motorcycle_selected.png')),
-                  label: '내 차',
-                ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/images/thunder.png')),
-                  activeIcon: ImageIcon(AssetImage('assets/images/thunder_selected.png')),
-                  label: '번개',
-                ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/images/chat.png')),
-                  activeIcon: ImageIcon(AssetImage('assets/images/chat_selected.png')),
-                  label: '채팅',
-                ),
-              ],
-            ),
-            const AdBannerWidget(),
-          ],
+              ),
+              const AdBannerWidget(),
+            ],
+          ),
         ),
       ),
     );
