@@ -398,7 +398,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       const SizedBox(width: 2),
                       Transform.translate(
                         offset: Platform.isAndroid
-                            ? const Offset(0, 0) // 안드로이드에서는 위로 조정
+                            ? const Offset(0, 1)
                             : const Offset(0, -1),
                         child: Icon(Icons.keyboard_arrow_right,
                             size: 14,
@@ -525,7 +525,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       const SizedBox(width: 2),
                       Transform.translate(
                         offset: Platform.isAndroid 
-                               ? const Offset(0, 0) // 안드로이드에서는 위로 조정
+                               ? const Offset(0, 1)
                                : const Offset(0, -1),
                         child: Icon(Icons.keyboard_arrow_right,
                           size: 14,
