@@ -365,7 +365,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FF),
-        //color: const Color(0xFFFF0000), // 순수한 빨간색 (Red)
         borderRadius: BorderRadius.circular(8),
       ),
       margin: const EdgeInsets.only(left: 16, right: 16, top: 0, bottom: 16),
