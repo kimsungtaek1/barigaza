@@ -387,27 +387,27 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   MaterialPageRoute(builder: (context) => EventsListScreen()),
                 ),
                 child: Container(
-  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-  child: Row(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      const Text('더보기',
-        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-      ),
-      const SizedBox(width: 2),
-      Transform.translate(
-        offset: Platform.isAndroid 
-               ? const Offset(0, 0) // 안드로이드에서는 위로 조정
-               : const Offset(0, -2),  // iOS에서는 그대로
-        child: Icon(Icons.keyboard_arrow_right,
-          size: 11,
-          color: Color(0xFF6B7280)
-        ),
-      ),
-    ],
-  ),
-)
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text('더보기',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                      ),
+                      const SizedBox(width: 2),
+                      Transform.translate(
+                        offset: Platform.isAndroid
+                            ? const Offset(0, 0) // 안드로이드에서는 위로 조정
+                            : const Offset(0, -1),
+                        child: Icon(Icons.keyboard_arrow_right,
+                            size: 14,
+                            color: Color(0xFF6B7280)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -526,7 +526,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       Transform.translate(
                         offset: Platform.isAndroid 
                                ? const Offset(0, 0) // 안드로이드에서는 위로 조정
-                               : const Offset(0, -2),  // iOS에서는 그대로
+                               : const Offset(0, -1),
                         child: Icon(Icons.keyboard_arrow_right,
                           size: 14,
                           color: Color(0xFF6B7280)

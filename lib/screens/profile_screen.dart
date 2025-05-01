@@ -932,9 +932,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                                                   Transform.translate(
                                                     offset: Platform.isAndroid
                                                         ? const Offset(0, 0) // 안드로이드에서는 위로 조정
-                                                        : const Offset(0, -2),  // iOS에서는 그대로
+                                                        : const Offset(0, -1),
                                                     child: Icon(Icons.keyboard_arrow_right,
-                                                        size: 11,
+                                                        size: 14,
                                                         color: Color(0xFF6B7280)
                                                     ),
                                                   ),
