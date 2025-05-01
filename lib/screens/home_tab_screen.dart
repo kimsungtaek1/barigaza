@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -395,9 +396,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
       ),
       const SizedBox(width: 2),
-      // 아이콘만 약간 위로 올리기 위해 Transform 사용
       Transform.translate(
-        offset: const Offset(0, -1), // 수치는 테스트해보면서 조정
+        offset: Platform.isAndroid 
+               ? const Offset(0, 0) // 안드로이드에서는 위로 조정
+               : const Offset(0, -2),  // iOS에서는 그대로
         child: Icon(Icons.keyboard_arrow_right,
           size: 11,
           color: Color(0xFF6B7280)
@@ -512,26 +514,27 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   MaterialPageRoute(builder: (context) => RiderCafeScreen()),
                 ),
                 child: Container(
-  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-  child: Row(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      const Text('더보기',
-        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-      ),
-      const SizedBox(width: 2),
-      // 아이콘만 약간 위로 올리기 위해 Transform 사용
-      Transform.translate(
-        offset: const Offset(0, -1), // 수치는 테스트해보면서 조정
-        child: Icon(Icons.keyboard_arrow_right,
-          size: 11,
-          color: Color(0xFF6B7280)
-        ),
-      ),
-    ],
-  ),
-)
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text('더보기',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                      ),
+                      const SizedBox(width: 2),
+                      Transform.translate(
+                        offset: Platform.isAndroid 
+                               ? const Offset(0, 0) // 안드로이드에서는 위로 조정
+                               : const Offset(0, -2),  // iOS에서는 그대로
+                        child: Icon(Icons.keyboard_arrow_right,
+                          size: 11,
+                          color: Color(0xFF6B7280)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
