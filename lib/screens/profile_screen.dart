@@ -930,7 +930,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                                   ),
                                                   const SizedBox(width: 2),
                                                   Padding(
-                                                    padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
+                                                    padding: const EdgeInsets.only(top: 2), // 미세 조정으로 완벽한 중앙 정렬
                                                     child: const Icon(Icons.keyboard_arrow_right,
                                                         size: 14,
                                                         color: Color(0xFF6B7280)

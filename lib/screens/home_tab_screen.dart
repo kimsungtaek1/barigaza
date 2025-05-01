@@ -365,9 +365,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FF),
+        //color: const Color(0xFFFF0000), // 순수한 빨간색 (Red)
         borderRadius: BorderRadius.circular(8),
       ),
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 0, bottom: 16),
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 28
       ),
       child: Column(
@@ -396,7 +397,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       ),
                       const SizedBox(width: 2),
                       Padding(
-                        padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
+                        padding: const EdgeInsets.only(top: 2), // 미세 조정으로 완벽한 중앙 정렬
                         child: const Icon(Icons.keyboard_arrow_right,
                             size: 14,
                             color: Color(0xFF6B7280)
@@ -521,7 +522,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       ),
                       const SizedBox(width: 2),
                       Padding(
-                        padding: const EdgeInsets.only(top: 1), // 미세 조정으로 완벽한 중앙 정렬
+                        padding: const EdgeInsets.only(top: 2), // 미세 조정으로 완벽한 중앙 정렬
                         child: const Icon(Icons.keyboard_arrow_right,
                             size: 14,
                             color: Color(0xFF6B7280)
