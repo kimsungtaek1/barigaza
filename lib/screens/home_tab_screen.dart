@@ -395,12 +395,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                       ),
                       const SizedBox(width: 2),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: const Icon(Icons.keyboard_arrow_right,
-                            size: 11,
-                            color: Color(0xFF6B7280)
-                        ),
+                      const Icon(Icons.keyboard_arrow_right,
+                          size: 11,
+                          color: Color(0xFF6B7280)
                       ),
                     ],
                   ),
@@ -520,12 +517,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                       ),
                       const SizedBox(width: 2),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: const Icon(Icons.keyboard_arrow_right,
-                            size: 11,
-                            color: Color(0xFF6B7280)
-                        ),
+                      const Icon(Icons.keyboard_arrow_right,
+                          size: 11,
+                          color: Color(0xFF6B7280)
                       ),
                     ],
                   ),
