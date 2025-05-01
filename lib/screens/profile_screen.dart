@@ -921,9 +921,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                             ),
                                             child: Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              height: 20, // 정확한 높이 지정
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
-                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                crossAxisAlignment: CrossAxisAlignment.center, // 수직 중앙 정렬
                                                 children: [
                                                   const Text('더보기',
                                                     style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
