@@ -386,23 +386,26 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   MaterialPageRoute(builder: (context) => EventsListScreen()),
                 ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  height: 20, // 정확한 높이 지정
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center, // 수직 중앙 정렬
-                    children: [
-                      const Text('더보기',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-                      ),
-                      const SizedBox(width: 2),
-                      const Icon(Icons.keyboard_arrow_right,
-                          size: 11,
-                          color: Color(0xFF6B7280)
-                      ),
-                    ],
-                  ),
-                ),
+  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      const Text('더보기',
+        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+      ),
+      const SizedBox(width: 2),
+      // 아이콘만 약간 위로 올리기 위해 Transform 사용
+      Transform.translate(
+        offset: const Offset(0, -1), // 수치는 테스트해보면서 조정
+        child: Icon(Icons.keyboard_arrow_right,
+          size: 11,
+          color: Color(0xFF6B7280)
+        ),
+      ),
+    ],
+  ),
+)
               ),
             ],
           ),
@@ -509,23 +512,26 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   MaterialPageRoute(builder: (context) => RiderCafeScreen()),
                 ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  height: 20, // 정확한 높이 지정
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center, // 수직 중앙 정렬
-                    children: [
-                      const Text('더보기',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-                      ),
-                      const SizedBox(width: 2),
-                      const Icon(Icons.keyboard_arrow_right,
-                          size: 11,
-                          color: Color(0xFF6B7280)
-                      ),
-                    ],
-                  ),
-                ),
+  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      const Text('더보기',
+        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+      ),
+      const SizedBox(width: 2),
+      // 아이콘만 약간 위로 올리기 위해 Transform 사용
+      Transform.translate(
+        offset: const Offset(0, -1), // 수치는 테스트해보면서 조정
+        child: Icon(Icons.keyboard_arrow_right,
+          size: 11,
+          color: Color(0xFF6B7280)
+        ),
+      ),
+    ],
+  ),
+)
               ),
             ],
           ),
