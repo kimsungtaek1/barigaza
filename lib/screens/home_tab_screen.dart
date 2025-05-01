@@ -392,13 +392,13 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const Text('더보기',
-                        style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                       ),
                       const SizedBox(width: 2),
                       Padding(
-                        padding: const EdgeInsets.only(top: 2), // 미세 조정으로 완벽한 중앙 정렬
+                        padding: const EdgeInsets.only(bottom: 2),
                         child: const Icon(Icons.keyboard_arrow_right,
-                            size: 14,
+                            size: 11,
                             color: Color(0xFF6B7280)
                         ),
                       ),
@@ -517,13 +517,13 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const Text('더보기',
-                        style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                       ),
                       const SizedBox(width: 2),
                       Padding(
-                        padding: const EdgeInsets.only(top: 2), // 미세 조정으로 완벽한 중앙 정렬
+                        padding: const EdgeInsets.only(bottom: 2),
                         child: const Icon(Icons.keyboard_arrow_right,
-                            size: 14,
+                            size: 11,
                             color: Color(0xFF6B7280)
                         ),
                       ),
