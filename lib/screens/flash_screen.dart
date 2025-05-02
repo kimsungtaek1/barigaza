@@ -585,6 +585,26 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     );
   }
 
+  // 주소를 좌표로 변환하는 함수 - 캐시 적용
+  final Map<String, GeoPoint?> _addressCache = {};
+
+  Future<GeoPoint?> _getCachedCoordinates(String address) async {
+    // 캐시에 있으면 바로 반환
+    if (_addressCache.containsKey(address)) {
+      return _addressCache[address];
+    }
+    
+    // 캐시에 없으면 API 호출하고 캐시에 저장
+    final result = await getCoordinatesFromAddress(address);
+    _addressCache[address] = result;
+    return result;
+  }
+
+  // 비동기 작업을 UI와 분리하여 실행하는 도우미 함수
+  Future<T> _runAsyncTask<T>(Future<T> Function() task) async {
+    return await task();
+  }
+
   void _showAddMeetingDialog() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -604,6 +624,12 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     DateTime? selectedTime;
     GeoPoint? selectedLocation;
     final ChatService _chatService = ChatService();
+
+    // 미리 사용자 정보 로드 (UI 차단 방지)
+    final userDocFuture = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
 
     if (!mounted) return;
     showDialog(
@@ -792,6 +818,8 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                             );
                             if (result != null) {
                               departureAddressController.text = result;
+                              // 주소가 선택되면 백그라운드에서 미리 좌표 변환 시작
+                              _getCachedCoordinates(result);
                             }
                           },
                         ),
@@ -923,6 +951,7 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                       Expanded(
                         child: InkWell(
                           onTap: () async {
+                            // 검증 단계
                             if (titleController.text.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('모임 제목을 입력해주세요.')),
@@ -953,9 +982,32 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                               );
                               return;
                             }
+
+                            // 로딩 표시 (UI 응답성 향상)
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (BuildContext context) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                            );
+
                             try {
-                              selectedLocation =
-                              await getCoordinatesFromAddress(departureAddressController.text);
+                              // 병렬 처리로 성능 향상
+                              final results = await Future.wait([
+                                _getCachedCoordinates(departureAddressController.text),
+                                userDocFuture
+                              ]);
+                              
+                              // 결과 파싱
+                              selectedLocation = results[0] as GeoPoint?;
+                              final userDoc = results[1] as DocumentSnapshot;
+                              
+                              // 로딩 다이얼로그 닫기
+                              if (mounted) Navigator.of(context).pop();
+                              
                               if (selectedLocation == null) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -963,14 +1015,10 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                                 );
                                 return;
                               }
-                              // 사용자 닉네임 가져오기
-                              final userDoc = await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(user.uid)
-                                  .get();
 
                               final userNickname = userDoc['nickname'] ?? '알 수 없음';
 
+                              // 모임 데이터 준비
                               final newMeeting = {
                                 'title': titleController.text,
                                 'hostId': user.uid,
@@ -986,24 +1034,23 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                                 'createdAt': Timestamp.now(),
                               };
 
-                              await FirebaseFirestore.instance.runTransaction((transaction) async {
-                                final meetingRef = await FirebaseFirestore.instance
-                                    .collection('meetings')
-                                    .add(newMeeting);
+                              // 개선된 트랜잭션 처리
+                              final meetingRef = await FirebaseFirestore.instance
+                                  .collection('meetings')
+                                  .add(newMeeting);
 
-                                final chatId = await _chatService.createGroupChatRoom(
-                                  [user.uid],
-                                  titleController.text,
-                                  meetingId: meetingRef.id,
-                                );
+                              // 채팅룸 생성 (트랜잭션 외부로 분리)
+                              final chatId = await _chatService.createGroupChatRoom(
+                                [user.uid],
+                                titleController.text,
+                                meetingId: meetingRef.id,
+                              );
 
-                                transaction.update(meetingRef, {
-                                  'chatRoomId': chatId
-                                });
-                              });
+                              // chatRoomId 업데이트는 별도 작업으로 분리
+                              await meetingRef.update({'chatRoomId': chatId});
 
                               if (!mounted) return;
-                              Navigator.pop(context);
+                              Navigator.pop(context); // 다이얼로그 닫기
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('모임이 성공적으로 생성되었습니다.'),
@@ -1011,13 +1058,19 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
                                 ),
                               );
                             } catch (e) {
+                              // 에러 발생 시 로딩 다이얼로그가 열려있으면 닫기
+                              if (mounted && Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              }
+                              
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('모임 생성 중 오류가 발생했습니다: $e'),
+                                  content: Text('모임 생성 중 오류가 발생했습니다.'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
+                              debugPrint('모임 생성 오류: $e'); // 오류 로깅만 하고 사용자에게는 간단한 메시지
                             }
                           },
                           child: Container(
@@ -1072,45 +1125,48 @@ class _FlashScreenState extends State<FlashScreen> with WidgetsBindingObserver {
     }
   }
 
+  // 네이버 지오코딩 API 호출 최적화
   Future<GeoPoint?> getCoordinatesFromAddress(String address) async {
+    // 캐싱은 _getCachedCoordinates 메서드에서 처리하므로 여기서는 API 호출만 최적화
+    
     try {
       final String apiUrl = 'https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode';
       final Uri url = Uri.parse('$apiUrl?query=${Uri.encodeComponent(address)}');
-      debugPrint("getCoordinatesFromAddress: Request URL: $url");
+      
+      // 디버그 로그 최소화
+      // debugPrint("getCoordinatesFromAddress: Request URL: $url");
 
       final response = await http.get(
         url,
         headers: {
-          'X-NCP-APIGW-API-KEY-ID': '5k1r2vy3lz', // 본인의 API Key ID로 교체
-          'X-NCP-APIGW-API-KEY': 'W6McBwHf5CFEVZpfz1DSuc2DdzTNC8Ks0l1paU4P', // 본인의 API Key로 교체
+          'X-NCP-APIGW-API-KEY-ID': '5k1r2vy3lz',
+          'X-NCP-APIGW-API-KEY': 'W6McBwHf5CFEVZpfz1DSuc2DdzTNC8Ks0l1paU4P',
         },
       );
 
-      debugPrint("getCoordinatesFromAddress: Response status: ${response.statusCode}");
-      debugPrint("getCoordinatesFromAddress: Response body: ${response.body}");
-
+      // 디버그 로그 최소화
+      // debugPrint("getCoordinatesFromAddress: Response status: ${response.statusCode}");
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['addresses'] != null && data['addresses'].isNotEmpty) {
           final location = data['addresses'][0];
           final double? y = double.tryParse(location['y']);
           final double? x = double.tryParse(location['x']);
-          if (y == null || x == null) {
-            debugPrint("getCoordinatesFromAddress: Parsing error: y=$y, x=$x");
-            return null;
+          
+          if (y != null && x != null) {
+            return GeoPoint(y, x);
           }
-          debugPrint("getCoordinatesFromAddress: Parsed coordinates: GeoPoint($y, $x)");
-          return GeoPoint(y, x);
-        } else {
-          debugPrint("getCoordinatesFromAddress: No addresses found in response.");
         }
-      } else {
-        debugPrint("getCoordinatesFromAddress: Non-200 status code: ${response.statusCode}");
+      } else if (response.statusCode == 429) {
+        // 요청 제한 초과 시 짧은 대기 후 재시도
+        await Future.delayed(const Duration(milliseconds: 500));
+        return getCoordinatesFromAddress(address);
       }
-    } catch (e, stackTrace) {
-      debugPrint("getCoordinatesFromAddress: Exception occurred: $e");
-      debugPrint("Stack trace: $stackTrace");
+    } catch (e) {
+      debugPrint("주소 좌표 변환 오류: $e");
     }
+    
     return null;
   }
 }
