@@ -428,6 +428,9 @@ service cloud.firestore {
                       // viewCount 필드만 업데이트하는 경우에는 누구나 가능
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount'])
                     );
+      // Post delete permissions
+			allow delete: if isAuthenticated() &&
+              (isAdminRole() || request.auth.uid == resource.data.userId);
 
       match /likes/{userId} {
         allow read: if true;
